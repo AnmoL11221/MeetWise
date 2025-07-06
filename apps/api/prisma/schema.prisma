@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator nestjs-dto {
+  provider = "prisma-generator-nestjs-dto"
+  output   = "../src/prisma/generated-dto"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  clerkId         String    @unique
+  email           String    @unique
+  name            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  meetings        Meeting[] @relation("MeetingAttendees")
+  createdMeetings Meeting[] @relation("MeetingCreator")
+}
+
+model Meeting {
+  id            String    @id @default(cuid())
+  title         String
+  agendaItems   Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  creatorId     String
+  creator       User      @relation("MeetingCreator", fields: [creatorId], references: [id])
+  attendees     User[]    @relation("MeetingAttendees")
+}
