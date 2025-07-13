@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Get,
@@ -13,49 +10,86 @@ import {
   Req,
 } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
-import { CreateMeetingDto } from '../prisma/generated-dto/create-meeting.dto';
-import { UpdateMeetingDto } from '../prisma/generated-dto/update-meeting.dto';
 import { ClerkAuthGuard } from '../guards/clerk-auth.guard';
+import { BodyCreateMeetingDto } from './dto/body-create-meeting.dto';
+import { UpdateMeetingDto } from '../prisma/generated-dto/update-meeting.dto';
 import { Request } from 'express';
+import { PrismaService } from 'prisma/prisma.service';
 import { InviteUserDto } from './dto/invite-user.dto';
 
 @Controller('meetings')
 @UseGuards(ClerkAuthGuard)
 export class MeetingsController {
-  constructor(private readonly meetingsService: MeetingsService) {}
+  constructor(
+    private readonly meetingsService: MeetingsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post()
-  create(@Body() createMeetingDto: CreateMeetingDto, @Req() req: Request) {
-    const creatorId = req.auth.sub;
-    return this.meetingsService.create(createMeetingDto, creatorId);
-  }
-
-  @Get()
-  findAllForUser(@Req() req: Request) {
-    const userId = req.auth.sub;
-    return this.meetingsService.findAllForUser(userId);
+  async create(@Body() body: BodyCreateMeetingDto, @Req() req: Request) {
+    const clerkId = req.auth.sub;
+    try {
+      return await this.meetingsService.create(
+        body.title,
+        clerkId,
+        body.agendaItems,
+      );
+    } catch (error) {
+      return {
+        statusCode: 500,
+        message: error instanceof Error ? error.message : 'Failed to create meeting',
+      };
+    }
   }
 
   @Post(':id/invite')
-  inviteUser(
-    @Param('id') meetingId: string,
+  async inviteUser(
+    @Param('id') id: string,
     @Body() inviteUserDto: InviteUserDto,
+    @Req() req: Request
   ) {
-    return this.meetingsService.inviteUser(meetingId, inviteUserDto);
+    const clerkId = req.auth.sub;
+    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    if (!user) {
+      return { statusCode: 404, message: 'User not found' };
+    }
+    return this.meetingsService.inviteUser(id, inviteUserDto);
+  }
+
+  @Get()
+  async findAllForUser(@Req() req: Request) {
+    const clerkId = req.auth.sub;
+    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    console.log('User lookup for clerkId', clerkId, '=>', user);
+    if (!user) return [];
+    return this.meetingsService.findAllForUser(user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.meetingsService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const clerkId = req.auth.sub;
+    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    if (!user) return null;
+    return this.meetingsService.findOne(id, user.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMeetingDto: UpdateMeetingDto) {
-    return this.meetingsService.update(id, updateMeetingDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateData: UpdateMeetingDto,
+    @Req() req: Request,
+  ) {
+    const clerkId = req.auth.sub;
+    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    if (!user) return null;
+    return this.meetingsService.update(id, updateData, user.id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.meetingsService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const clerkId = req.auth.sub;
+    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    if (!user) return null;
+    return this.meetingsService.remove(id, user.id);
   }
 }

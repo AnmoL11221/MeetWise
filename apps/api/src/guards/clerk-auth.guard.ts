@@ -1,33 +1,41 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   CanActivate,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { clerkClient } from '@clerk/clerk-sdk-node';
 import { Request } from 'express';
 
 @Injectable()
 export class ClerkAuthGuard implements CanActivate {
+  private readonly logger = new Logger(ClerkAuthGuard.name);
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request: Request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>(); // <-- Type the request
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      throw new UnauthorizedException('Authorization header is missing.');
+      this.logger.warn('Authorization header missing');
+      throw new UnauthorizedException('Authorization header is missing');
     }
 
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      this.logger.warn('Bearer token missing');
+      throw new UnauthorizedException('Bearer token is missing');
+    }
 
     try {
       const claims = await clerkClient.verifyToken(token);
-      request.auth = claims;
+      (request as any).auth = { sub: claims.sub };
 
       return true;
     } catch (error) {
-      // Log the actual error for better debugging on the server
-      console.error('Clerk token verification failed:', error);
-      throw new UnauthorizedException('Invalid or expired token.');
+      this.logger.error('Token verification failed', (error as Error).stack);
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

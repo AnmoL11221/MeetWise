@@ -15,21 +15,23 @@ function WhoIsHere() {
         <UsersIcon className="w-5 h-5 mr-2 text-gray-400" />
         Who's Here
       </h3>
-      <div className="flex -space-x-2 overflow-hidden h-8">
+      <div className="flex -space-x-2 overflow-hidden h-16">
         {currentUser?.info && (
           <img
-            src={currentUser.info.avatar}
+            src={currentUser.info.avatar || '/default-avatar.png'}
+            onError={(e) => { e.currentTarget.src = '/default-avatar.png'; }}
             title={`${currentUser.info.name} (You)`}
-            className="w-10 h-10 rounded-full border-2 border-blue-400"
+            className="w-16 h-16 rounded-full border-2 border-blue-400"
           />
         )}
         {others.map(({ connectionId, info }) =>
           info ? (
             <img
               key={connectionId}
-              src={info.avatar}
+              src={info.avatar || '/default-avatar.png'}
+              onError={(e) => { e.currentTarget.src = '/default-avatar.png'; }}
               title={info.name}
-              className="w-10 h-10 rounded-full border-2 border-gray-600"
+              className="w-16 h-16 rounded-full border-2 border-gray-600"
             />
           ) : null
         )}

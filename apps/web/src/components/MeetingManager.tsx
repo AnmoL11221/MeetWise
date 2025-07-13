@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@clerk/nextjs';
 import { PlusIcon, FileTextIcon, HourglassIcon } from 'lucide-react';
-
+import { useAuth } from '@clerk/nextjs';
 interface Meeting {
   id: string;
   title: string;
@@ -14,23 +13,26 @@ interface Meeting {
 }
 
 export default function MeetingManager() {
+  const { getToken } = useAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [newMeetingTitle, setNewMeetingTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { getToken, isLoaded } = useAuth();
 
   const fetchMeetings = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const token = await getToken();
+
+
       const response = await fetch('http://localhost:3000/meetings', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
+
       if (!response.ok) {
         throw new Error(`Failed to fetch meetings. Server responded with ${response.status}.`);
       }
@@ -45,12 +47,10 @@ export default function MeetingManager() {
   };
 
   useEffect(() => {
-    if (isLoaded) {
-      fetchMeetings();
-    }
-  }, [isLoaded]);
+    fetchMeetings();
+  }, []);
 
-  const handleCreateMeeting = async (e: FormEvent) => {
+  const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMeetingTitle.trim() || isCreating) return;
 
@@ -58,6 +58,7 @@ export default function MeetingManager() {
     setError(null);
     try {
       const token = await getToken();
+
       const response = await fetch('http://localhost:3000/meetings', {
         method: 'POST',
         headers: {
@@ -120,8 +121,8 @@ export default function MeetingManager() {
         <h2 className="text-2xl font-semibold text-white">Your Meetings</h2>
         {isLoading ? (
           <div className="mt-4 space-y-3 animate-pulse">
-            <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg h-16"></div>
-            <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg h-16"></div>
+            <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg h-20"></div>
+            <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg h-20"></div>
           </div>
         ) : (
           <ul className="mt-4 space-y-3">
