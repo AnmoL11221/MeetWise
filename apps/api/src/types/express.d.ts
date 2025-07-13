@@ -1,9 +1,7 @@
-import { JwtPayload } from '@clerk/clerk-sdk-node';
-
-declare global {
-  namespace Express {
-    export interface Request {
-      auth: JwtPayload;
-    }
+declare namespace Express {
+  export interface Request {
+    auth: {
+      sub: string;
+    };
   }
 }

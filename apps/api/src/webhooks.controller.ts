@@ -1,32 +1,45 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prettier/prettier */
 import {
   Controller,
   Post,
   Headers,
   Req,
   BadRequestException,
-  Body,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { Webhook } from 'svix';
 import { WebhookEvent } from '@clerk/clerk-sdk-node';
 import { PrismaService } from '../prisma/prisma.service';
+import { Request } from 'express';
+
+interface RequestWithRawBody extends Request {
+  rawBody: Buffer;
+}
 
 @Controller('webhooks')
 export class WebhooksController {
   constructor(private readonly prisma: PrismaService) {}
+
   @Post('clerk')
+  @HttpCode(HttpStatus.OK)
   async handleClerkWebhook(
     @Headers('svix-id') svixId: string,
     @Headers('svix-timestamp') svixTimestamp: string,
     @Headers('svix-signature') svixSignature: string,
-    @Body() body: any,
+    @Req() req: RequestWithRawBody,
   ) {
-    const payload = JSON.stringify(body);
+    console.log('--- Clerk Webhook Debug ---');
+    console.log('CLERK_WEBHOOK_SECRET prefix:', process.env.CLERK_WEBHOOK_SECRET?.slice(0, 8));
+    console.log('Webhook handler called');
+    console.log('Headers:', req.headers);
+    console.log('Raw body:', req.rawBody);
+    const payload = req.rawBody;
     const secret = process.env.CLERK_WEBHOOK_SECRET;
 
     if (!secret) {
-      throw new Error('CLERK_WEBHOOK_SECRET is not set in .env');
+      console.error('CLERK_WEBHOOK_SECRET is not set in environment variables.');
+      throw new BadRequestException('Webhook secret not configured.');
     }
 
     const wh = new Webhook(secret);
@@ -39,28 +52,53 @@ export class WebhooksController {
         'svix-signature': svixSignature,
       }) as WebhookEvent;
     } catch (err) {
-      console.error('Webhook verification failed:', err);
+      console.error('Webhook signature verification failed:', (err as Error).message);
       throw new BadRequestException('Webhook verification failed');
     }
 
-    const eventType = msg.type;
+    const { type: eventType, data } = msg;
     console.log(`Received Clerk webhook event: ${eventType}`);
+    try {
+      switch (eventType) {
+        case 'user.created':
+          await this.prisma.user.upsert({
+            where: { email: data.email_addresses[0].email_address },
+            update: {
+              clerkId: data.id,
+              name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'New User',
+            },
+            create: {
+              id: data.id,
+              clerkId: data.id,
+              email: data.email_addresses[0].email_address,
+              name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'New User',
+            },
+          });
+          console.log(`User ${data.id} successfully synced.`);
+          break;
 
-    if (eventType === 'user.created') {
-      const { id, email_addresses, first_name, last_name } = msg.data;
+        case 'user.updated':
+          await this.prisma.user.update({
+            where: { id: data.id },
+            data: {
+              email: data.email_addresses[0].email_address,
+              name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Updated User',
+            },
+          });
+          console.log(`User ${data.id} successfully updated.`);
+          break;
 
-      try {
-        await this.prisma.user.create({
-          data: {
-            clerkId: id as string,
-            email: email_addresses[0].email_address,
-            name: `${first_name || ''} ${last_name || ''}`.trim(),
-          },
-        });
-        console.log(`User ${id} successfully created in the database.`);
-      } catch (error) {
-        console.error('Failed to create user in database:', error);
+        case 'user.deleted':
+          if (data.deleted) {
+            await this.prisma.user.delete({
+              where: { id: data.id },
+            });
+            console.log(`User ${data.id} successfully deleted.`);
+          }
+          break;
       }
+    } catch (error) {
+      console.error(`Failed to process webhook event ${eventType} for user ${data.id}:`, error);
     }
 
     return { status: 'success' };
