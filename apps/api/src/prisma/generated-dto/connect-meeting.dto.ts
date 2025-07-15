@@ -1,5 +1,3 @@
-
-  export class ConnectMeetingDto {
-    id: string;
-  }
-  
+export class ConnectMeetingDto {
+  id: string;
+}

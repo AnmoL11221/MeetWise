@@ -12,6 +12,7 @@ export function MeetingRoom({ roomId, children }: { roomId: string; children: Re
       initialPresence={{}}
       initialStorage={{
         agendaItems: new LiveList<LiveObject<{ text: string; author: string }>>([]),
+        actionItems: new LiveList<LiveObject<import('../../liveblocks.config').ActionItemData>>([]),
       }}
     >
       <ClientSideSuspense fallback={

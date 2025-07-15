@@ -1,5 +1,6 @@
 import MeetingClient from './MeetingClient';
 
-export default function MeetingPage({ params }: { params: { meetingId: string } }) {
-  return <MeetingClient meetingId={params.meetingId} />;
+export default async function MeetingPage({ params }: { params: Promise<{ meetingId: string }> }) {
+  const { meetingId } = await params;
+  return <MeetingClient meetingId={meetingId} />;
 }

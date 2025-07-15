@@ -73,6 +73,15 @@ export class MeetingsController {
     return this.meetingsService.findOne(id, user.id);
   }
 
+  @Get(':id/attendees')
+  async getAttendees(@Param('id') id: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { id },
+      include: { attendees: { select: { id: true, name: true, email: true } } },
+    });
+    return meeting?.attendees ?? [];
+  }
+
   @Patch(':id')
   async update(
     @Param('id') id: string,

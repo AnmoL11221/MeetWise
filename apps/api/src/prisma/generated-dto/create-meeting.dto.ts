@@ -1,10 +1,6 @@
-
-import {Prisma} from '@prisma/client'
-
-
-
-
+import { Prisma } from '@prisma/client';
 export class CreateMeetingDto {
   title: string;
-agendaItems?: Prisma.InputJsonValue;
+  agendaItems?: Prisma.InputJsonValue;
+  creatorId: string;
 }

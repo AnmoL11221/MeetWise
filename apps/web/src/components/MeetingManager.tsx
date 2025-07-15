@@ -25,14 +25,11 @@ export default function MeetingManager() {
     setError(null);
     try {
       const token = await getToken();
-
-
       const response = await fetch('http://localhost:3000/meetings', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
       if (!response.ok) {
         throw new Error(`Failed to fetch meetings. Server responded with ${response.status}.`);
       }
@@ -53,12 +50,10 @@ export default function MeetingManager() {
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMeetingTitle.trim() || isCreating) return;
-
     setIsCreating(true);
     setError(null);
     try {
       const token = await getToken();
-
       const response = await fetch('http://localhost:3000/meetings', {
         method: 'POST',
         headers: {
@@ -67,11 +62,9 @@ export default function MeetingManager() {
         },
         body: JSON.stringify({ title: newMeetingTitle }),
       });
-
       if (!response.ok) {
         throw new Error(`Failed to create meeting. Server responded with ${response.status}.`);
       }
-
       setNewMeetingTitle('');
       await fetchMeetings();
     } catch (err: any) {
