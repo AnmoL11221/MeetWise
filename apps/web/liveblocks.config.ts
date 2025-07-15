@@ -16,8 +16,17 @@ export type AgendaItemData = {
   text: string;
   author: string;
 };
+export type ActionItemData = {
+  id: string;
+  text: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  assigneeId?: string;
+  dueDate?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+};
 export type Storage = {
   agendaItems: LiveList<LiveObject<AgendaItemData>>;
+  actionItems: LiveList<LiveObject<ActionItemData>>;
 };
 export const {
   RoomProvider,

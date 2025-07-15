@@ -13,32 +13,40 @@ import { InviteUserDto } from './dto/invite-user.dto';
 export class MeetingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(title: string, creatorClerkId: string, agendaItems?: any): Promise<Meeting> {
+  async create(
+    title: string,
+    creatorClerkId: string,
+    agendaItems?: any,
+  ): Promise<Meeting> {
     // Find user by clerkId instead of id
     const user = await this.prisma.user.findUnique({
       where: { clerkId: creatorClerkId },
     });
 
     if (!user) {
-      throw new NotFoundException(`User with Clerk ID "${creatorClerkId}" not found. Please ensure your account is synced.`);
+      throw new NotFoundException(
+        `User with Clerk ID "${creatorClerkId}" not found. Please ensure your account is synced.`,
+      );
     }
 
     try {
-      return await this.prisma.meeting.create({
+      const createdMeeting: Meeting = await this.prisma.meeting.create({
         data: {
           title,
           agendaItems: agendaItems || undefined,
-          creator: {
-            connect: { id: user.id },
-          },
+          creatorId: creatorClerkId, // Store Clerk user ID
           attendees: {
             connect: { id: user.id },
           },
         },
       });
+      return createdMeeting;
     } catch (error) {
       // Enhanced error handling
-      throw new Error('Failed to create meeting: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      throw new Error(
+        'Failed to create meeting: ' +
+          (error instanceof Error ? error.message : 'Unknown error'),
+      );
     }
   }
 
@@ -53,6 +61,14 @@ export class MeetingsService {
       },
       orderBy: {
         createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        title: true,
+        agendaItems: true,
+        createdAt: true,
+        updatedAt: true,
+        creatorId: true,
       },
     });
   }
