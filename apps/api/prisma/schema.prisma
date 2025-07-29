@@ -17,21 +17,90 @@ model User {
   clerkId         String    @unique
   email           String    @unique
   name            String?
+  linkedinProfile String?
+  company         String?
+  jobTitle        String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   meetings        Meeting[] @relation("MeetingAttendees")
+  createdMeetings Meeting[] @relation("MeetingCreator")
 }
 
 model Meeting {
   id            String    @id @default(cuid())
   title         String
-  description   String?   // Meeting description/details
-  scheduledAt   DateTime? // When the meeting is scheduled for
-  isPrivate     Boolean   @default(true) // Whether the meeting is private
-  roomAccess    String    @default("INVITE_ONLY") // INVITE_ONLY, PUBLIC, RESTRICTED
+  description   String?
+  scheduledAt   DateTime?
+  isPrivate     Boolean   @default(true)
+  roomAccess    String    @default("INVITE_ONLY")
   agendaItems   Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  creatorId     String    // Now stores Clerk user ID
+  creatorId     String
   attendees     User[]    @relation("MeetingAttendees")
+  creator       User      @relation("MeetingCreator", fields: [creatorId], references: [id])
+  
+  briefingDossier BriefingDossier?
+  meetingNotes    MeetingNote[]
+  sharedResources SharedResource[]
+}
+
+model BriefingDossier {
+  id                String   @id @default(cuid())
+  meetingId         String   @unique
+  meeting           Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  attendeeProfiles  Json?
+  relevantDocuments Json?
+  marketNews        Json?
+  agendaAnalysis    Json?
+  keyInsights       String?
+  recommendations   String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model MeetingNote {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  title       String
+  content     String
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SharedResource {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  type        String
+  url         String?
+  content     String?
+  uploadedBy  String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ExternalAttendee {
+  id              String   @id @default(cuid())
+  email           String
+  name            String
+  company         String?
+  jobTitle        String?
+  linkedinProfile String?
+  recentActivity  Json?
+  companyNews     Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
