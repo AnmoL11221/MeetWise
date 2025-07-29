@@ -1,5 +1,6 @@
 import { currentUser } from '@clerk/nextjs/server';
 import MeetingManager from '@/components/MeetingManager';
+import UpcomingMeetings from '@/components/UpcomingMeetings';
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -8,15 +9,24 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold tracking-tight">
-        Welcome, {user.firstName || 'User'}!
-      </h1>
-      <p className="mt-2 text-lg text-gray-600">
-        Here are your upcoming meetings and action items.
-      </p>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Welcome, {user.firstName || 'User'}!
+        </h1>
+        <p className="mt-2 text-lg text-gray-400">
+          Here are your upcoming meetings and dedicated spaces.
+        </p>
+      </div>
 
-      <MeetingManager />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <MeetingManager />
+        </div>
+        <div>
+          <UpcomingMeetings />
+        </div>
+      </div>
     </div>
   );
 }
