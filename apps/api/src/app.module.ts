@@ -6,6 +6,7 @@ import { MeetingsModule } from '../meetings/meetings.module';
 import { ActionItemsModule } from '../action-items/action-items.module';
 import { ClerkModule } from '../clerk/clerk.module';
 import { BriefingDossierModule } from '../briefing-dossier/briefing-dossier.module';
+import { AISparringModule } from '../ai-sparring/ai-sparring.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { BriefingDossierModule } from '../briefing-dossier/briefing-dossier.modu
     ActionItemsModule,
     ClerkModule,
     BriefingDossierModule,
+    AISparringModule,
   ],
   controllers: [AppController],
   providers: [AppService],

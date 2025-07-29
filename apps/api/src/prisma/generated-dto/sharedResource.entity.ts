@@ -1,20 +1,18 @@
 
-import {Prisma} from '@prisma/client'
 import {ApiProperty} from '@nestjs/swagger'
+import {Meeting} from './meeting.entity'
 
 
-export class MeetingDto {
+export class SharedResource {
   id: string ;
+meetingId: string ;
+meeting?: Meeting ;
 title: string ;
 description: string  | null;
-@ApiProperty({
-  type: `string`,
-  format: `date-time`,
-})
-scheduledAt: Date  | null;
-isPrivate: boolean ;
-roomAccess: string ;
-agendaItems: Prisma.JsonValue  | null;
+type: string ;
+url: string  | null;
+content: string  | null;
+uploadedBy: string ;
 @ApiProperty({
   type: `string`,
   format: `date-time`,

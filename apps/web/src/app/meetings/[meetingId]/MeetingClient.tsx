@@ -6,9 +6,10 @@ import { ActionItemManager } from '@/components/ActionItemManager';
 import MeetingSettings from '@/components/MeetingSettings';
 import AIBriefingDossier from '@/components/AIBriefingDossier';
 import SharedResources from '@/components/SharedResources';
+import AISparringPartner from '@/components/AISparringPartner';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, LockIcon, UsersIcon, GlobeIcon, ClockIcon } from 'lucide-react';
 
@@ -26,13 +27,16 @@ interface Meeting {
 
 export default function MeetingClient({ meetingId }: { meetingId: string }) {
   const { getToken, userId } = useAuth();
+  const router = useRouter();
   const [meetingData, setMeetingData] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const router = useRouter();
 
-  const fetchMeeting = async () => {
+  const fetchMeeting = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const token = await getToken();
       const response = await fetch(`http://localhost:3000/meetings/${meetingId}`, {
@@ -40,41 +44,49 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
           'Authorization': `Bearer ${token}`,
         },
       });
+
       if (!response.ok) {
-        setMeetingData(null);
-      } else {
-        setMeetingData(await response.json());
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch meeting details.');
       }
-    } catch (error) {
-      setMeetingData(null);
+
+      const data = await response.json();
+      setMeetingData(data);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [meetingId, getToken]);
 
   useEffect(() => {
     if (!meetingId) return;
     fetchMeeting();
-  }, [meetingId]);
+  }, [meetingId, fetchMeeting]);
 
   const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this meeting? This action cannot be undone.')) {
+      return;
+    }
     setDeleteLoading(true);
     setDeleteError(null);
     try {
       const token = await getToken();
-      const res = await fetch(`http://localhost:3000/meetings/${meetingId}`, {
+      const response = await fetch(`http://localhost:3000/meetings/${meetingId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to delete meeting');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete meeting.');
       }
+
       router.push('/dashboard');
     } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete meeting');
+      setDeleteError(err.message || 'An unexpected error occurred during deletion.');
     } finally {
       setDeleteLoading(false);
     }
@@ -83,13 +95,13 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
   const getAccessIcon = (roomAccess: string) => {
     switch (roomAccess) {
       case 'INVITE_ONLY':
-        return <LockIcon className="w-4 h-4 text-yellow-500" />;
+        return <LockIcon className="w-4 h-4 text-red-400" />;
       case 'PUBLIC':
-        return <GlobeIcon className="w-4 h-4 text-green-500" />;
+        return <GlobeIcon className="w-4 h-4 text-green-400" />;
       case 'RESTRICTED':
-        return <UsersIcon className="w-4 h-4 text-blue-500" />;
+        return <UsersIcon className="w-4 h-4 text-yellow-400" />;
       default:
-        return <LockIcon className="w-4 h-4 text-yellow-500" />;
+        return null;
     }
   };
 
@@ -102,38 +114,59 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
       case 'RESTRICTED':
         return 'Restricted';
       default:
-        return 'Invite Only';
+        return '';
     }
   };
 
   const formatScheduledDate = (scheduledAt?: string) => {
-    if (!scheduledAt) return 'Not scheduled';
-    return new Date(scheduledAt).toLocaleString();
+    if (!scheduledAt) return 'Not Scheduled';
+    const date = new Date(scheduledAt);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const getTimeUntilMeeting = (scheduledAt?: string) => {
     if (!scheduledAt) return null;
-    const date = new Date(scheduledAt);
     const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    
-    if (diffTime < 0) return null;
-    
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (diffHours > 24) {
-      const diffDays = Math.floor(diffHours / 24);
-      return `${diffDays} days, ${diffHours % 24} hours`;
-    }
-    if (diffHours > 0) {
-      return `${diffHours} hours, ${diffMinutes} minutes`;
-    }
-    return `${diffMinutes} minutes`;
+    const meetingTime = new Date(scheduledAt);
+    const diffMs = meetingTime.getTime() - now.getTime();
+
+    if (diffMs < 0) return 'Meeting has passed';
+
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} away`;
+    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} away`;
+    if (diffMinutes > 0) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} away`;
+    return 'Starting soon';
   };
 
-  if (!meetingId || loading) {
-    return <div className="text-center mt-10 text-gray-400">Loading meeting...</div>;
+  if (loading) {
+    return (
+      <div className="text-center mt-10">
+        <h1 className="text-4xl font-bold text-white">Loading Meeting...</h1>
+        <p className="mt-4 text-gray-400">Please wait while we fetch meeting details.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center mt-10">
+        <h1 className="text-4xl font-bold text-white">Error</h1>
+        <p className="mt-4 text-red-400">{error}</p>
+        <Link href="/dashboard" className="mt-6 inline-block text-blue-400 hover:text-blue-300">
+          ← Back to Dashboard
+        </Link>
+      </div>
+    );
   }
 
   if (!meetingData) {
@@ -164,32 +197,31 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
           {meetingData.description && (
             <p className="mt-3 text-lg text-gray-300">{meetingData.description}</p>
           )}
-          
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <CalendarIcon className="w-4 h-4" />
               <span>Created: {new Date(meetingData.createdAt).toLocaleDateString()}</span>
             </div>
-            
             {meetingData.scheduledAt && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <ClockIcon className="w-4 h-4" />
                 <span>Scheduled: {formatScheduledDate(meetingData.scheduledAt)}</span>
-                {timeUntil && (
-                  <span className="text-blue-400">({timeUntil} from now)</span>
-                )}
               </div>
             )}
-            
-            <div className="flex items-center gap-2">
+            {timeUntil && timeUntil !== 'Meeting has passed' && (
+              <div className="flex items-center gap-1 text-blue-400">
+                <ClockIcon className="w-4 h-4" />
+                <span>{timeUntil}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1">
               {getAccessIcon(meetingData.roomAccess)}
               <span>{getAccessLabel(meetingData.roomAccess)}</span>
             </div>
-            
             {meetingData.isPrivate && (
-              <div className="flex items-center gap-2">
-                <LockIcon className="w-4 h-4 text-yellow-500" />
-                <span>Private Meeting</span>
+              <div className="flex items-center gap-1">
+                <LockIcon className="w-4 h-4 text-red-400" />
+                <span>Private</span>
               </div>
             )}
           </div>
@@ -225,6 +257,8 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
           <AIBriefingDossier meetingId={meetingId} />
           <SharedResources meetingId={meetingId} />
         </div>
+        
+        <AISparringPartner meetingId={meetingId} />
         
         <AgendaManager />
         <ActionItemManager meetingId={meetingId} creatorId={meetingData.creatorId} />

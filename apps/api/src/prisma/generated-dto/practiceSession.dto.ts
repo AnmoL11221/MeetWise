@@ -1,20 +1,20 @@
 
-import {Prisma} from '@prisma/client'
 import {ApiProperty} from '@nestjs/swagger'
 
 
-export class MeetingDto {
+export class PracticeSessionDto {
   id: string ;
 title: string ;
 description: string  | null;
+userRole: string ;
+scenario: string ;
+difficulty: string ;
 @ApiProperty({
-  type: `string`,
-  format: `date-time`,
+  type: `integer`,
+  format: `int32`,
 })
-scheduledAt: Date  | null;
-isPrivate: boolean ;
-roomAccess: string ;
-agendaItems: Prisma.JsonValue  | null;
+duration: number ;
+status: string ;
 @ApiProperty({
   type: `string`,
   format: `date-time`,
