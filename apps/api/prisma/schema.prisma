@@ -25,6 +25,10 @@ model User {
 model Meeting {
   id            String    @id @default(cuid())
   title         String
+  description   String?   // Meeting description/details
+  scheduledAt   DateTime? // When the meeting is scheduled for
+  isPrivate     Boolean   @default(true) // Whether the meeting is private
+  roomAccess    String    @default("INVITE_ONLY") // INVITE_ONLY, PUBLIC, RESTRICTED
   agendaItems   Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

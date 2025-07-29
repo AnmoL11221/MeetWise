@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
 import { ClerkAuthGuard } from '../guards/clerk-auth.guard';
@@ -29,11 +30,7 @@ export class MeetingsController {
   async create(@Body() body: BodyCreateMeetingDto, @Req() req: Request) {
     const clerkId = req.auth.sub;
     try {
-      return await this.meetingsService.create(
-        body.title,
-        clerkId,
-        body.agendaItems,
-      );
+      return await this.meetingsService.create(body, clerkId);
     } catch (error) {
       return {
         statusCode: 500,
@@ -53,7 +50,7 @@ export class MeetingsController {
     if (!user) {
       return { statusCode: 404, message: 'User not found' };
     }
-    return this.meetingsService.inviteUser(id, inviteUserDto);
+    return this.meetingsService.inviteUser(id, inviteUserDto, user.id);
   }
 
   @Get()
@@ -63,6 +60,18 @@ export class MeetingsController {
     console.log('User lookup for clerkId', clerkId, '=>', user);
     if (!user) return [];
     return this.meetingsService.findAllForUser(user.id);
+  }
+
+  @Get('upcoming')
+  async getUpcomingMeetings(
+    @Req() req: Request,
+    @Query('limit') limit?: string
+  ) {
+    const clerkId = req.auth.sub;
+    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    if (!user) return [];
+    const limitNum = limit ? parseInt(limit, 10) : 5;
+    return this.meetingsService.getUpcomingMeetings(user.id, limitNum);
   }
 
   @Get(':id')

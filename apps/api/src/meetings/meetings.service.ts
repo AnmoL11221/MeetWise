@@ -3,20 +3,21 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { UpdateMeetingDto } from '../prisma/generated-dto/update-meeting.dto';
 import { Meeting } from '../prisma/generated-dto/meeting.entity';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { BodyCreateMeetingDto } from './dto/body-create-meeting.dto';
 
 @Injectable()
 export class MeetingsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(
-    title: string,
+    createMeetingDto: BodyCreateMeetingDto,
     creatorClerkId: string,
-    agendaItems?: any,
   ): Promise<Meeting> {
     // Find user by clerkId instead of id
     const user = await this.prisma.user.findUnique({
@@ -32,8 +33,12 @@ export class MeetingsService {
     try {
       const createdMeeting: Meeting = await this.prisma.meeting.create({
         data: {
-          title,
-          agendaItems: agendaItems || undefined,
+          title: createMeetingDto.title,
+          description: createMeetingDto.description,
+          scheduledAt: createMeetingDto.scheduledAt ? new Date(createMeetingDto.scheduledAt) : null,
+          isPrivate: createMeetingDto.isPrivate ?? true,
+          roomAccess: createMeetingDto.roomAccess ?? 'INVITE_ONLY',
+          agendaItems: createMeetingDto.agendaItems || undefined,
           creatorId: creatorClerkId, // Store Clerk user ID
           attendees: {
             connect: { id: user.id },
@@ -59,12 +64,17 @@ export class MeetingsService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [
+        { scheduledAt: 'asc' },
+        { createdAt: 'desc' },
+      ],
       select: {
         id: true,
         title: true,
+        description: true,
+        scheduledAt: true,
+        isPrivate: true,
+        roomAccess: true,
         agendaItems: true,
         createdAt: true,
         updatedAt: true,
@@ -85,9 +95,8 @@ export class MeetingsService {
       throw new NotFoundException(`Meeting with ID "${id}" not found`);
     }
 
-    const isAuthorized =
-      meetingWithAttendees.creatorId === userId ||
-      meetingWithAttendees.attendees.some((attendee) => attendee.id === userId);
+    // Check if user has access to this meeting
+    const isAuthorized = this.checkMeetingAccess(meetingWithAttendees, userId);
 
     if (!isAuthorized) {
       throw new UnauthorizedException(
@@ -102,7 +111,15 @@ export class MeetingsService {
   async inviteUser(
     meetingId: string,
     inviteUserDto: InviteUserDto,
+    inviterUserId: string,
   ): Promise<Meeting> {
+    // Check if inviter has permission to invite users
+    const meeting = await this.findOne(meetingId, inviterUserId);
+    
+    if (meeting.creatorId !== inviterUserId && meeting.roomAccess === 'RESTRICTED') {
+      throw new ForbiddenException('Only the meeting creator can invite users to this meeting.');
+    }
+
     const userToInvite = await this.prisma.user.findUnique({
       where: { email: inviteUserDto.email },
     });
@@ -111,6 +128,22 @@ export class MeetingsService {
       throw new NotFoundException(
         `User with email "${inviteUserDto.email}" not found.`,
       );
+    }
+
+    // Check if user is already an attendee
+    const existingAttendee = await this.prisma.meeting.findFirst({
+      where: {
+        id: meetingId,
+        attendees: {
+          some: {
+            id: userToInvite.id,
+          },
+        },
+      },
+    });
+
+    if (existingAttendee) {
+      throw new Error('User is already an attendee of this meeting.');
     }
 
     return this.prisma.meeting.update({
@@ -133,7 +166,13 @@ export class MeetingsService {
     updateData: UpdateMeetingDto,
     userId: string,
   ): Promise<Meeting> {
-    await this.findOne(id, userId);
+    const meeting = await this.findOne(id, userId);
+    
+    // Only creator can update meeting settings
+    if (meeting.creatorId !== userId) {
+      throw new ForbiddenException('Only the meeting creator can update meeting settings.');
+    }
+
     return this.prisma.meeting.update({
       where: { id },
       data: updateData,
@@ -148,5 +187,55 @@ export class MeetingsService {
       );
     }
     return this.prisma.meeting.delete({ where: { id } });
+  }
+
+  async getUpcomingMeetings(userId: string, limit: number = 5): Promise<Meeting[]> {
+    return this.prisma.meeting.findMany({
+      where: {
+        attendees: {
+          some: {
+            id: userId,
+          },
+        },
+        scheduledAt: {
+          gte: new Date(),
+        },
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        scheduledAt: true,
+        isPrivate: true,
+        roomAccess: true,
+        createdAt: true,
+        updatedAt: true,
+        creatorId: true,
+      },
+    });
+  }
+
+  private checkMeetingAccess(meeting: any, userId: string): boolean {
+    // Creator always has access
+    if (meeting.creatorId === userId) {
+      return true;
+    }
+
+    // Check if user is an attendee
+    const isAttendee = meeting.attendees.some((attendee: any) => attendee.id === userId);
+    if (isAttendee) {
+      return true;
+    }
+
+    // Public meetings are accessible to everyone
+    if (!meeting.isPrivate && meeting.roomAccess === 'PUBLIC') {
+      return true;
+    }
+
+    return false;
   }
 }
