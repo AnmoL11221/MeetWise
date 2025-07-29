@@ -4,6 +4,8 @@ import AgendaManager from '@/components/AgendaManager';
 import InviteManager from '@/components/InviteManager';
 import { ActionItemManager } from '@/components/ActionItemManager';
 import MeetingSettings from '@/components/MeetingSettings';
+import AIBriefingDossier from '@/components/AIBriefingDossier';
+import SharedResources from '@/components/SharedResources';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
@@ -53,7 +55,6 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
   useEffect(() => {
     if (!meetingId) return;
     fetchMeeting();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
 
   const handleDelete = async () => {
@@ -219,6 +220,12 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
         )}
         
         <InviteManager meetingId={meetingId} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <AIBriefingDossier meetingId={meetingId} />
+          <SharedResources meetingId={meetingId} />
+        </div>
+        
         <AgendaManager />
         <ActionItemManager meetingId={meetingId} creatorId={meetingData.creatorId} />
       </div>
