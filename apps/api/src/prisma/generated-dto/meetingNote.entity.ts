@@ -1,15 +1,17 @@
 
 import {ApiProperty} from '@nestjs/swagger'
+import {Meeting} from './meeting.entity'
+import {User} from './user.entity'
 
 
-export class UserDto {
+export class MeetingNote {
   id: string ;
-clerkId: string ;
-email: string ;
-name: string  | null;
-linkedinProfile: string  | null;
-company: string  | null;
-jobTitle: string  | null;
+meetingId: string ;
+meeting?: Meeting ;
+title: string ;
+content: string ;
+authorId: string ;
+author?: User ;
 @ApiProperty({
   type: `string`,
   format: `date-time`,

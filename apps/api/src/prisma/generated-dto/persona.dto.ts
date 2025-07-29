@@ -1,15 +1,18 @@
 
+import {Prisma} from '@prisma/client'
 import {ApiProperty} from '@nestjs/swagger'
 
 
-export class UserDto {
+export class PersonaDto {
   id: string ;
-clerkId: string ;
-email: string ;
-name: string  | null;
-linkedinProfile: string  | null;
+name: string ;
+role: string ;
 company: string  | null;
-jobTitle: string  | null;
+personality: string ;
+background: string ;
+expertise: string ;
+communicationStyle: string ;
+typicalQuestions: Prisma.JsonValue  | null;
 @ApiProperty({
   type: `string`,
   format: `date-time`,

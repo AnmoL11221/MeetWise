@@ -1,72 +1,95 @@
-# MeetWise - AI-Powered Meeting Management Platform
+# MeetWise
 
-MeetWise is a comprehensive meeting management platform that combines real-time collaboration, AI-powered insights, and intelligent meeting preparation tools. Built with Next.js, NestJS, and PostgreSQL, it provides a modern, feature-rich solution for teams to manage meetings effectively.
+**MeetWise** - Transform your meetings with AI-powered insights and real-time collaboration.
 
 ## 🚀 Features
 
 ### Core Meeting Management
-- **Meeting Creation & Scheduling**: Create meetings with detailed descriptions, scheduling, and privacy controls
-- **Access Control**: Three levels of meeting access - INVITE_ONLY, PUBLIC, and RESTRICTED
-- **Real-time Collaboration**: Live agenda management and action item tracking
-- **User Management**: Secure authentication with Clerk and attendee invitation system
+- **Smart Meeting Creation**: Create meetings with detailed descriptions, scheduling, and access controls
+- **Real-time Collaboration**: Live collaborative meeting rooms with agenda management
+- **Action Item Tracking**: Track and manage action items with priorities and status updates
+- **User Management**: Invite and manage meeting participants with role-based access
 
-### AI Briefing Dossier
-- **Attendee Profiles**: LinkedIn integration with recent activity and company information
-- **Relevant Documents**: AI-powered analysis of past meeting notes and shared resources
-- **Market Intelligence**: Real-time news about companies and competitors
-- **Agenda Analysis**: Smart topic complexity assessment and time estimation
-- **AI Insights**: Automated meeting preparation recommendations and key insights
+### AI-Powered Intelligence
+- **AI Briefing Dossier**: Get comprehensive pre-meeting intelligence including attendee profiles, relevant documents, and market insights
+- **AI Sparring Partner**: Practice your presentations with realistic AI personas and get delivery feedback
 
-### Shared Resources
-- **Document Management**: Upload and organize meeting-related documents
-- **Link Sharing**: Share external resources and references
-- **Collaborative Scratchpad**: Real-time brainstorming and note-taking
-- **Resource Types**: Support for documents, links, files, and collaborative scratchpads
+### Advanced Features
+- **Meeting Settings**: Configure privacy, access controls, and scheduling
+- **Shared Resources**: Collaborate on documents, links, and files
+- **Upcoming Meetings**: Dashboard view of your scheduled meetings
+- **Clerk Authentication**: Secure user authentication and management
 
-### Action Item Tracking
-- **Kanban Board**: Visual task management with drag-and-drop functionality
-- **Priority Levels**: LOW, MEDIUM, HIGH priority classification
-- **Assignee Management**: Assign tasks to meeting attendees
-- **Status Tracking**: TODO, IN_PROGRESS, DONE status workflow
-- **Due Date Management**: Set and track task deadlines
+## 🎯 AI Sparring Partner - Revolutionary Practice Feature
 
-### Real-time Collaboration
-- **Liveblocks Integration**: Real-time agenda and action item updates
-- **Multi-user Editing**: Simultaneous collaboration on meeting materials
-- **Presence Indicators**: See who's currently active in the meeting
-- **Conflict Resolution**: Automatic conflict resolution for concurrent edits
+The AI Sparring Partner is a groundbreaking feature that transforms how you prepare for important meetings. It's like having a personal coach who helps you practice and refine your presentation skills in a safe, realistic environment.
 
-## 🛠 Tech Stack
+### 🎭 Persona Simulation
+The AI can role-play as different types of meeting attendees, each with their own personality, expertise, and communication style:
 
-### Frontend
-- **Next.js 14**: React framework with App Router
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first CSS framework
-- **Clerk**: Authentication and user management
-- **Liveblocks**: Real-time collaboration
-- **Lucide React**: Icon library
+- **CFO Persona**: Asks tough questions about ROI, budget implications, and financial risks
+- **Engineering Lead**: Focuses on technical feasibility, implementation details, and system integration
+- **Product Manager**: Questions user impact, market fit, and success metrics
+- **Sales Director**: Inquires about competitive advantage, customer positioning, and revenue impact
 
-### Backend
-- **NestJS**: Node.js framework for scalable server-side applications
-- **Prisma**: Database ORM with type safety
-- **PostgreSQL**: Primary database
-- **Clerk**: Authentication integration
-- **Swagger**: API documentation
+### 🔍 Follow-up Question Drills
+Based on your talking points and responses, the AI generates the most likely follow-up questions you'll receive, allowing you to:
+- Practice your answers in advance
+- Refine your arguments and evidence
+- Identify potential weak points in your presentation
+- Build confidence through repetition
 
-### Infrastructure
-- **Docker**: Containerization for development
-- **pnpm**: Fast, disk space efficient package manager
-- **ESLint**: Code linting and formatting
+### 🎤 Delivery Feedback
+Optional microphone integration provides real-time feedback on your presentation delivery:
 
-## 📋 Prerequisites
+- **Pacing Analysis**: Evaluates your speaking speed and rhythm
+- **Clarity Assessment**: Analyzes sentence structure and communication clarity
+- **Filler Word Detection**: Identifies and counts filler words (um, uh, like, etc.)
+- **Confidence Indicators**: Assesses your assertiveness and conviction
+- **Overall Performance Score**: Provides a comprehensive delivery rating
 
-Before you begin, ensure you have the following installed:
-- Node.js (v18 or higher)
-- pnpm
-- Docker and Docker Compose
-- Git
+### 🎯 How It Works
 
-## 🚀 Quick Start
+1. **Setup Your Practice Session**
+   - Select your role (Presenter, Facilitator, SME, etc.)
+   - Choose your scenario (Pitch, Status Update, Problem Discussion, etc.)
+   - The AI analyzes your meeting agenda and selects relevant personas
+
+2. **Practice with AI Personas**
+   - Engage in realistic conversations with AI personas
+   - Each persona responds based on their role and expertise
+   - Practice handling tough questions and objections
+
+3. **Get Instant Feedback**
+   - Record your responses for delivery analysis
+   - Receive detailed feedback on pacing, clarity, and confidence
+   - Get actionable recommendations for improvement
+
+4. **Generate Follow-up Questions**
+   - Request AI-generated follow-up questions based on your responses
+   - Practice handling the most likely objections and inquiries
+   - Refine your messaging and evidence
+
+### 🎨 User Interface
+
+The AI Sparring Partner features a modern, intuitive interface:
+
+- **Setup Panel**: Configure your practice session with role and scenario selection
+- **Persona Cards**: Visual representation of AI personas with their expertise and communication style
+- **Chat Interface**: Real-time conversation with AI personas
+- **Recording Controls**: Easy audio recording and transcript editing
+- **Feedback Dashboard**: Comprehensive delivery analysis with scores and recommendations
+- **Session Stats**: Track your practice progress and engagement
+
+### 🔧 Technical Implementation
+
+- **Backend**: NestJS with Prisma ORM for data management
+- **AI Logic**: Sophisticated persona simulation and response generation
+- **Audio Processing**: Real-time audio analysis for delivery feedback
+- **Real-time Communication**: WebSocket-based chat interface
+- **Database**: PostgreSQL with optimized schema for practice sessions
+
+## 🛠️ Installation
 
 ### 1. Clone the Repository
 ```bash
@@ -80,16 +103,16 @@ pnpm install
 ```
 
 ### 3. Environment Setup
-Create environment files for both API and web applications:
+Create `.env` files in both `apps/api` and `apps/web` directories:
 
-**API Environment** (`apps/api/.env`):
+**apps/api/.env:**
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/meetwise"
+DATABASE_URL="postgresql://postgres:password@localhost:5433/meetwise"
 CLERK_SECRET_KEY="your_clerk_secret_key"
 CLERK_PUBLISHABLE_KEY="your_clerk_publishable_key"
 ```
 
-**Web Environment** (`apps/web/.env.local`):
+**apps/web/.env:**
 ```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your_clerk_publishable_key"
 NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
@@ -100,151 +123,66 @@ NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY="your_liveblocks_public_key"
 LIVEBLOCKS_SECRET_KEY="your_liveblocks_secret_key"
 ```
 
-### 4. Start Database
+### 4. Database Setup
 ```bash
-docker compose up -d
-```
+# Start the database
+docker-compose up -d
 
-### 5. Run Database Migrations
-```bash
+# Run migrations
 cd apps/api
 npx prisma migrate dev
+npx prisma generate
 ```
 
-### 6. Start Development Servers
+### 5. Start the Application
 ```bash
-# Start API server
+# Start the API server
 cd apps/api
-pnpm run start:dev
+npm run start:dev
 
-# Start web application (in new terminal)
+# Start the web application (in a new terminal)
 cd apps/web
-pnpm run dev
+npm run dev
 ```
 
-The application will be available at:
-- **Frontend**: http://localhost:3001
-- **Backend API**: http://localhost:3000
+## 🎯 Usage
 
-## 📁 Project Structure
+### Getting Started with AI Sparring Partner
 
-```
-MeetWise/
-├── apps/
-│   ├── api/                    # NestJS backend
-│   │   ├── src/
-│   │   │   ├── action-items/   # Action item management
-│   │   │   ├── briefing-dossier/ # AI briefing features
-│   │   │   ├── clerk/          # Authentication integration
-│   │   │   ├── guards/         # Route protection
-│   │   │   ├── meetings/       # Meeting management
-│   │   │   └── prisma/         # Database configuration
-│   │   └── prisma/
-│   │       └── schema.prisma   # Database schema
-│   └── web/                    # Next.js frontend
-│       ├── src/
-│       │   ├── app/            # App Router pages
-│       │   ├── components/     # React components
-│       │   └── middleware.ts   # Clerk middleware
-│       └── liveblocks.config.ts
-├── docker-compose.yml          # Database container
-└── package.json               # Workspace configuration
-```
+1. **Create a Meeting**: Set up a meeting with agenda items and attendees
+2. **Access Practice Mode**: Click on the "AI Sparring Partner" section in your meeting
+3. **Configure Session**: Select your role and scenario
+4. **Start Practicing**: Begin your conversation with AI personas
+5. **Record and Analyze**: Use the recording feature to get delivery feedback
+6. **Improve**: Review feedback and practice again
 
-## 🔧 API Endpoints
+### Best Practices
 
-### Meetings
-- `GET /meetings` - Get user's meetings
-- `POST /meetings` - Create new meeting
-- `GET /meetings/:id` - Get meeting details
-- `PATCH /meetings/:id` - Update meeting
-- `DELETE /meetings/:id` - Delete meeting
-- `POST /meetings/:id/invite` - Invite user to meeting
-- `GET /meetings/upcoming` - Get upcoming meetings
+- **Practice Regularly**: Use the AI Sparring Partner before important meetings
+- **Try Different Scenarios**: Practice various meeting types and roles
+- **Review Feedback**: Pay attention to pacing, clarity, and confidence scores
+- **Refine Responses**: Use follow-up questions to strengthen your arguments
+- **Record Multiple Sessions**: Track your improvement over time
 
-### Action Items
-- `GET /action-items/meeting/:meetingId` - Get meeting action items
-- `POST /action-items` - Create action item
-- `PATCH /action-items/:id` - Update action item
-- `DELETE /action-items/:id` - Delete action item
+## 🏗️ Architecture
 
-### AI Briefing Dossier
-- `GET /briefing-dossier/:meetingId` - Get briefing dossier
-- `POST /briefing-dossier/:meetingId/generate` - Generate new dossier
+### Backend (NestJS)
+- **Modules**: Meetings, Action Items, AI Sparring Partner, Briefing Dossier
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Clerk integration
+- **Real-time**: WebSocket support for live collaboration
 
-### Shared Resources
-- `GET /meetings/:meetingId/resources` - Get meeting resources
-- `POST /meetings/:meetingId/resources` - Add resource
-- `PATCH /meetings/:meetingId/resources/:id` - Update resource
-- `DELETE /meetings/:meetingId/resources/:id` - Delete resource
+### Frontend (Next.js)
+- **Framework**: Next.js 14 with App Router
+- **Styling**: Tailwind CSS with custom components
+- **State Management**: React hooks and context
+- **Real-time**: Liveblocks integration for collaborative features
 
-## 🎯 Usage Guide
-
-### Creating a Meeting
-1. Navigate to the dashboard
-2. Click "Create Meeting"
-3. Fill in meeting details (title, description, scheduled time)
-4. Set privacy and access controls
-5. Add agenda items
-6. Invite attendees
-
-### Using AI Briefing Dossier
-1. Open a meeting
-2. Navigate to the AI Briefing Dossier section
-3. Click "Generate Dossier" to create comprehensive briefing
-4. Explore different tabs:
-   - **Overview**: Key insights and recommendations
-   - **Attendees**: LinkedIn profiles and company information
-   - **Documents**: Relevant past meeting notes
-   - **Market News**: Company and competitor updates
-   - **Agenda Analysis**: Topic complexity and time estimates
-
-### Managing Action Items
-1. In a meeting, go to the Action Items section
-2. Create new tasks with priority levels
-3. Assign tasks to attendees
-4. Track progress with drag-and-drop Kanban board
-5. Update status and due dates
-
-### Sharing Resources
-1. In a meeting, access the Shared Resources section
-2. Add documents, links, or create scratchpads
-3. Collaborate in real-time on shared materials
-4. Organize resources by type and relevance
-
-## 🔒 Security Features
-
-- **Authentication**: Secure user authentication with Clerk
-- **Authorization**: Role-based access control for meetings
-- **Data Protection**: Encrypted data transmission
-- **Privacy Controls**: Meeting-level privacy settings
-- **Input Validation**: Comprehensive input sanitization
-
-## 🚀 Deployment
-
-### Production Build
-```bash
-# Build API
-cd apps/api
-pnpm run build
-
-# Build Web
-cd apps/web
-pnpm run build
-```
-
-### Environment Variables
-Ensure all production environment variables are properly configured:
-- Database connection strings
-- Clerk API keys
-- Liveblocks credentials
-- CORS settings
-
-### Database Migration
-```bash
-cd apps/api
-npx prisma migrate deploy
-```
+### AI Features
+- **Persona Simulation**: Context-aware AI responses based on role and expertise
+- **Delivery Analysis**: Audio processing and speech analysis
+- **Question Generation**: AI-powered follow-up question generation
+- **Feedback System**: Comprehensive presentation feedback and recommendations
 
 ## 🤝 Contributing
 
@@ -254,28 +192,18 @@ npx prisma migrate deploy
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
 
-For support and questions:
-- Create an issue in the repository
-- Check the documentation
-- Review the API endpoints
-
-## 🔮 Roadmap
-
-- [ ] File upload functionality
-- [ ] Meeting templates
-- [ ] Advanced analytics
-- [ ] Mobile application
-- [ ] Calendar integration
-- [ ] Video conferencing integration
-- [ ] Advanced AI features
-- [ ] Multi-language support
+- **Clerk** for authentication
+- **Liveblocks** for real-time collaboration
+- **Prisma** for database management
+- **Tailwind CSS** for styling
+- **Lucide React** for icons
 
 ---
 
-**MeetWise** - Transform your meetings with AI-powered insights and real-time collaboration.
+**MeetWise** - Where AI meets human collaboration to create better meetings.
