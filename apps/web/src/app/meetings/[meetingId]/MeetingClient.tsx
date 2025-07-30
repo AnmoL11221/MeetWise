@@ -7,11 +7,12 @@ import MeetingSettings from '@/components/MeetingSettings';
 import AIBriefingDossier from '@/components/AIBriefingDossier';
 import SharedResources from '@/components/SharedResources';
 import AISparringPartner from '@/components/AISparringPartner';
+import VideoConferenceTab from '@/components/VideoConferenceTab';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, LockIcon, UsersIcon, GlobeIcon, ClockIcon } from 'lucide-react';
+import { CalendarIcon, LockIcon, UsersIcon, GlobeIcon, ClockIcon, Video, MessageSquare } from 'lucide-react';
 
 interface Meeting {
   id: string;
@@ -33,6 +34,7 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'collaboration' | 'video'>('collaboration');
 
   const fetchMeeting = useCallback(async () => {
     setLoading(true);
@@ -186,82 +188,125 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
 
   return (
     <MeetingRoom roomId={meetingId}>
-      <div>
-        <Link href="/dashboard" className="mb-8 inline-block text-blue-400 hover:text-blue-300">
-          ← Back to Dashboard
-        </Link>
-        
-        <div className="mb-6">
-          <h1 className="text-4xl font-extrabold tracking-tight text-white">{meetingData.title}</h1>
+      <div className="h-full flex flex-col">
+        <div className="flex-shrink-0">
+          <Link href="/dashboard" className="mb-8 inline-block text-blue-400 hover:text-blue-300">
+            ← Back to Dashboard
+          </Link>
           
-          {meetingData.description && (
-            <p className="mt-3 text-lg text-gray-300">{meetingData.description}</p>
+          <div className="mb-6">
+            <h1 className="text-4xl font-extrabold tracking-tight text-white">{meetingData.title}</h1>
+            
+            {meetingData.description && (
+              <p className="mt-3 text-lg text-gray-300">{meetingData.description}</p>
+            )}
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-400">
+              <div className="flex items-center gap-1">
+                <CalendarIcon className="w-4 h-4" />
+                <span>Created: {new Date(meetingData.createdAt).toLocaleDateString()}</span>
+              </div>
+              {meetingData.scheduledAt && (
+                <div className="flex items-center gap-1">
+                  <ClockIcon className="w-4 h-4" />
+                  <span>Scheduled: {formatScheduledDate(meetingData.scheduledAt)}</span>
+                </div>
+              )}
+              {timeUntil && timeUntil !== 'Meeting has passed' && (
+                <div className="flex items-center gap-1 text-blue-400">
+                  <ClockIcon className="w-4 h-4" />
+                  <span>{timeUntil}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                {getAccessIcon(meetingData.roomAccess)}
+                <span>{getAccessLabel(meetingData.roomAccess)}</span>
+              </div>
+              {meetingData.isPrivate && (
+                <div className="flex items-center gap-1">
+                  <LockIcon className="w-4 h-4 text-red-400" />
+                  <span>Private</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isCreator && (
+            <div className="my-6 flex gap-4">
+              <MeetingSettings
+                meetingId={meetingId}
+                initialSettings={{
+                  title: meetingData.title,
+                  description: meetingData.description,
+                  scheduledAt: meetingData.scheduledAt,
+                  isPrivate: meetingData.isPrivate,
+                  roomAccess: meetingData.roomAccess,
+                }}
+                onSettingsUpdate={fetchMeeting}
+              />
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700 transition disabled:opacity-50"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete Meeting'}
+              </button>
+              {deleteError && <div className="text-red-400 mt-2">{deleteError}</div>}
+            </div>
           )}
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-1">
-              <CalendarIcon className="w-4 h-4" />
-              <span>Created: {new Date(meetingData.createdAt).toLocaleDateString()}</span>
-            </div>
-            {meetingData.scheduledAt && (
-              <div className="flex items-center gap-1">
-                <ClockIcon className="w-4 h-4" />
-                <span>Scheduled: {formatScheduledDate(meetingData.scheduledAt)}</span>
+          
+          <InviteManager meetingId={meetingId} />
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex-shrink-0 border-b border-gray-700">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('collaboration')}
+              className={`px-4 py-3 text-sm font-medium rounded-t-lg transition-colors ${
+                activeTab === 'collaboration'
+                  ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Collaboration
               </div>
-            )}
-            {timeUntil && timeUntil !== 'Meeting has passed' && (
-              <div className="flex items-center gap-1 text-blue-400">
-                <ClockIcon className="w-4 h-4" />
-                <span>{timeUntil}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('video')}
+              className={`px-4 py-3 text-sm font-medium rounded-t-lg transition-colors ${
+                activeTab === 'video'
+                  ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                Video Conference
               </div>
-            )}
-            <div className="flex items-center gap-1">
-              {getAccessIcon(meetingData.roomAccess)}
-              <span>{getAccessLabel(meetingData.roomAccess)}</span>
-            </div>
-            {meetingData.isPrivate && (
-              <div className="flex items-center gap-1">
-                <LockIcon className="w-4 h-4 text-red-400" />
-                <span>Private</span>
-              </div>
-            )}
+            </button>
           </div>
         </div>
 
-        {isCreator && (
-          <div className="my-6 flex gap-4">
-            <MeetingSettings
-              meetingId={meetingId}
-              initialSettings={{
-                title: meetingData.title,
-                description: meetingData.description,
-                scheduledAt: meetingData.scheduledAt,
-                isPrivate: meetingData.isPrivate,
-                roomAccess: meetingData.roomAccess,
-              }}
-              onSettingsUpdate={fetchMeeting}
-            />
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700 transition disabled:opacity-50"
-              disabled={deleteLoading}
-            >
-              {deleteLoading ? 'Deleting...' : 'Delete Meeting'}
-            </button>
-            {deleteError && <div className="text-red-400 mt-2">{deleteError}</div>}
-          </div>
-        )}
-        
-        <InviteManager meetingId={meetingId} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <AIBriefingDossier meetingId={meetingId} />
-          <SharedResources meetingId={meetingId} />
+        {/* Tab Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'collaboration' ? (
+            <div className="h-full overflow-y-auto p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <AIBriefingDossier meetingId={meetingId} />
+                <SharedResources meetingId={meetingId} />
+              </div>
+              
+              <AISparringPartner meetingId={meetingId} />
+              
+              <AgendaManager />
+              <ActionItemManager meetingId={meetingId} creatorId={meetingData.creatorId} />
+            </div>
+          ) : (
+            <VideoConferenceTab meetingId={meetingId} meetingTitle={meetingData.title} />
+          )}
         </div>
-        
-        <AISparringPartner meetingId={meetingId} />
-        
-        <AgendaManager />
-        <ActionItemManager meetingId={meetingId} creatorId={meetingData.creatorId} />
       </div>
     </MeetingRoom>
   );

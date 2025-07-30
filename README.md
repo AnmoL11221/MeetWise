@@ -19,6 +19,7 @@
 - **Shared Resources**: Collaborate on documents, links, and files
 - **Upcoming Meetings**: Dashboard view of your scheduled meetings
 - **Clerk Authentication**: Secure user authentication and management
+- **Video Conferencing**: High-fidelity video calls with screen sharing, virtual backgrounds, and recording
 
 ## 🎯 AI Sparring Partner - Revolutionary Practice Feature
 
@@ -121,6 +122,11 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/dashboard"
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/dashboard"
 NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY="your_liveblocks_public_key"
 LIVEBLOCKS_SECRET_KEY="your_liveblocks_secret_key"
+
+# Daily.co Video Conferencing
+DAILY_API_KEY="your_daily_api_key"
+DAILY_DOMAIN="meetwise.daily.co"
+DAILY_ROOM_DOMAIN="meetwise.daily.co"
 ```
 
 ### 4. Database Setup
@@ -145,6 +151,16 @@ cd apps/web
 npm run dev
 ```
 
+### 6. Video Conferencing Setup (Optional)
+For video conferencing features, you'll need to:
+
+1. **Create a Daily.co account** at [daily.co](https://daily.co)
+2. **Get your API key** from the Daily.co dashboard
+3. **Configure your domain** in Daily.co settings
+4. **Add virtual background images** to `public/api/virtual-backgrounds/`
+
+See `apps/web/VIDEO_CONFERENCING_SETUP.md` for detailed setup instructions.
+
 ## 🎯 Usage
 
 ### Getting Started with AI Sparring Partner
@@ -155,6 +171,18 @@ npm run dev
 4. **Start Practicing**: Begin your conversation with AI personas
 5. **Record and Analyze**: Use the recording feature to get delivery feedback
 6. **Improve**: Review feedback and practice again
+
+### Using Video Conferencing
+
+1. **Join a Meeting**: Navigate to any meeting in MeetWise
+2. **Switch to Video Tab**: Click the "Video Conference" tab
+3. **Start Video Call**: Click "Join Video Call" to begin
+4. **Use Features**: 
+   - Toggle audio/video with the control buttons
+   - Share your screen for presentations
+   - Apply virtual backgrounds for privacy
+   - Record the meeting for later review
+5. **Manage Participants**: View and manage meeting participants
 
 ### Best Practices
 
@@ -177,6 +205,7 @@ npm run dev
 - **Styling**: Tailwind CSS with custom components
 - **State Management**: React hooks and context
 - **Real-time**: Liveblocks integration for collaborative features
+- **Video Conferencing**: Daily.co integration for high-quality video calls
 
 ### AI Features
 - **Persona Simulation**: Context-aware AI responses based on role and expertise
@@ -200,6 +229,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Clerk** for authentication
 - **Liveblocks** for real-time collaboration
+- **Daily.co** for video conferencing infrastructure
 - **Prisma** for database management
 - **Tailwind CSS** for styling
 - **Lucide React** for icons
