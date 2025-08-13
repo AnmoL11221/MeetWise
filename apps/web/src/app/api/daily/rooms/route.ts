@@ -30,10 +30,6 @@ export async function POST(request: NextRequest) {
       name: name || meetingId,
       privacy,
       maxParticipants,
-      enableChat,
-      enableRecording,
-      enableScreenshare,
-      enableVirtualBackgrounds,
       exp,
     });
 

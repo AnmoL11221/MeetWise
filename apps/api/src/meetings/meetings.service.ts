@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateMeetingDto } from '../prisma/generated-dto/update-meeting.dto';
 import { Meeting } from '../prisma/generated-dto/meeting.entity';
 import { InviteUserDto } from './dto/invite-user.dto';
@@ -17,37 +17,25 @@ export class MeetingsService {
 
   async create(
     createMeetingDto: BodyCreateMeetingDto,
-    creatorClerkId: string,
+    creatorUserId: string,
   ): Promise<Meeting> {
-    // Find user by clerkId instead of id
-    const user = await this.prisma.user.findUnique({
-      where: { clerkId: creatorClerkId },
-    });
-
-    if (!user) {
-      throw new NotFoundException(
-        `User with Clerk ID "${creatorClerkId}" not found. Please ensure your account is synced.`,
-      );
-    }
-
     try {
-      const createdMeeting: Meeting = await this.prisma.meeting.create({
+      const createdMeeting = await this.prisma.meeting.create({
         data: {
           title: createMeetingDto.title,
           description: createMeetingDto.description,
           scheduledAt: createMeetingDto.scheduledAt ? new Date(createMeetingDto.scheduledAt) : null,
           isPrivate: createMeetingDto.isPrivate ?? true,
           roomAccess: createMeetingDto.roomAccess ?? 'INVITE_ONLY',
-          agendaItems: createMeetingDto.agendaItems || undefined,
-          creatorId: creatorClerkId, // Store Clerk user ID
+          agendaItems: (createMeetingDto.agendaItems as any) || undefined,
+          creatorId: creatorUserId,
           attendees: {
-            connect: { id: user.id },
+            connect: { id: creatorUserId },
           },
         },
       });
-      return createdMeeting;
+      return createdMeeting as unknown as Meeting;
     } catch (error) {
-      // Enhanced error handling
       throw new Error(
         'Failed to create meeting: ' +
           (error instanceof Error ? error.message : 'Unknown error'),
@@ -56,7 +44,7 @@ export class MeetingsService {
   }
 
   async findAllForUser(userId: string): Promise<Meeting[]> {
-    return this.prisma.meeting.findMany({
+    return (this.prisma.meeting.findMany({
       where: {
         attendees: {
           some: {
@@ -80,7 +68,7 @@ export class MeetingsService {
         updatedAt: true,
         creatorId: true,
       },
-    });
+    }) as unknown) as Meeting[];
   }
 
   async findOne(id: string, userId: string): Promise<Meeting> {
@@ -88,6 +76,7 @@ export class MeetingsService {
       where: { id },
       include: {
         attendees: { select: { id: true } },
+        creator: { select: { clerkId: true } },
       },
     });
 
@@ -104,8 +93,8 @@ export class MeetingsService {
       );
     }
 
-    const { attendees, ...meetingData } = meetingWithAttendees;
-    return meetingData;
+    const { attendees, creator, ...meetingData } = meetingWithAttendees as any;
+    return { ...meetingData, creatorId: creator?.clerkId ?? meetingData.creatorId } as Meeting;
   }
 
   async inviteUser(
@@ -190,7 +179,7 @@ export class MeetingsService {
   }
 
   async getUpcomingMeetings(userId: string, limit: number = 5): Promise<Meeting[]> {
-    return this.prisma.meeting.findMany({
+    const rows = await this.prisma.meeting.findMany({
       where: {
         attendees: {
           some: {
@@ -215,8 +204,10 @@ export class MeetingsService {
         createdAt: true,
         updatedAt: true,
         creatorId: true,
+        agendaItems: true,
       },
     });
+    return rows as unknown as Meeting[];
   }
 
   private checkMeetingAccess(meeting: any, userId: string): boolean {

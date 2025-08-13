@@ -54,6 +54,11 @@ class DailyService {
       exp = dailyConfig.roomExpiration,
     } = options;
 
+    // Daily's API expects properties.exp as a UNIX timestamp (seconds since epoch).
+    // Our config provides a TTL in seconds. Convert TTL to absolute timestamp.
+    const nowSec = Math.floor(Date.now() / 1000);
+    const expTimestamp = exp > nowSec ? exp : nowSec + exp;
+
     const response = await fetch(`${this.baseUrl}/rooms`, {
       method: 'POST',
       headers: {
@@ -64,19 +69,15 @@ class DailyService {
         name,
         privacy,
         properties: {
-          exp,
+          exp: expTimestamp,
           max_participants: maxParticipants,
-          enable_chat: enableChat,
-          enable_recording: enableRecording,
-          enable_screenshare: enableScreenshare,
-          enable_virtual_backgrounds: enableVirtualBackgrounds,
         },
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to create Daily.co room: ${error.error || response.statusText}`);
+      const text = await response.text();
+      throw new Error(`Failed to create Daily.co room: ${response.status} ${text}`);
     }
 
     return response.json();
@@ -207,10 +208,12 @@ class DailyService {
     try {
       return await this.getRoom(roomName);
     } catch (error) {
-      return await this.createRoom({
-        name: roomName,
-        ...options,
-      });
+      try {
+        return await this.createRoom({ name: roomName, ...options });
+      } catch (err) {
+        // Fallback to public room if private creation fails due to account settings
+        return await this.createRoom({ name: roomName, privacy: 'public', maxParticipants: options.maxParticipants, exp: options.exp });
+      }
     }
   }
 }

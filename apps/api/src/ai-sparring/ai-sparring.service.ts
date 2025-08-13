@@ -60,7 +60,7 @@ export class AISparringService {
       where: { id: meetingId },
       include: {
         attendees: true,
-        agendaItems: true,
+        // agendaItems is a JSON field on Meeting entity; Prisma include doesn't support it as relation
         briefingDossier: true,
       },
     });
@@ -96,7 +96,7 @@ export class AISparringService {
       meeting: {
         title: meeting.title,
         description: meeting.description,
-        agendaItems: meeting.agendaItems,
+        agendaItems: meeting.agendaItems as any,
       },
     };
   }

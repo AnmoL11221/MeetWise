@@ -22,16 +22,13 @@ import {
   PhoneOff,
   Settings,
   Users,
-  Record,
+  Circle,
   Square,
-  MoreVertical,
-  Volume2,
-  VolumeX,
   Camera,
   CameraOff,
   Share,
   Download,
-  Background,
+  Image,
   Grid3X3,
   Maximize2,
   Minimize2,
@@ -246,7 +243,7 @@ const VideoConferenceControls: React.FC = () => {
           } text-white transition-colors`}
           title={isRecording ? 'Stop Recording' : 'Start Recording'}
         >
-          {isRecording ? <Square className="w-5 h-5" /> : <Record className="w-5 h-5" />}
+          {isRecording ? <Square className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
         </button>
 
         {/* Virtual Background */}
@@ -256,7 +253,7 @@ const VideoConferenceControls: React.FC = () => {
             className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-colors"
             title="Settings"
           >
-            <Background className="w-5 h-5" />
+            <Image className="w-5 h-5" />
           </button>
           
           {showSettings && (
@@ -362,9 +359,36 @@ const VideoConferenceInner: React.FC<VideoConferenceProps> = ({ roomUrl, onLeave
   });
 
   useEffect(() => {
-    if (daily) {
-      daily.join({ url: roomUrl });
-    }
+    const joinMeeting = async () => {
+      if (!daily) return;
+      try {
+        let token: string | undefined = undefined;
+        try {
+          const roomName = (() => {
+            try {
+              const u = new URL(roomUrl);
+              return u.pathname.replace(/^\//, '');
+            } catch {
+              return roomUrl.split('/').pop() || roomUrl;
+            }
+          })();
+          const resp = await fetch('/api/daily/tokens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roomName }),
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            token = data.token as string;
+          }
+        } catch {}
+
+        await daily.join(token ? { url: roomUrl, token } : { url: roomUrl });
+      } catch (e: any) {
+        setError(e?.message || 'Failed to join meeting');
+      }
+    };
+    joinMeeting();
   }, [daily, roomUrl]);
 
   if (error) {
