@@ -18,7 +18,6 @@ export class MeetingsController {
   private async ensureUserExists(clerkId: string) {
     let user = await this.prisma.user.findUnique({ where: { clerkId } });
     if (!user) {
-      // Try to get user info from Clerk
       try {
         const { clerkClient } = await import('@clerk/clerk-sdk-node');
         const clerkUser = await clerkClient.users.getUser(clerkId);
@@ -58,7 +57,7 @@ export class MeetingsController {
   @Get('upcoming')
   async getUpcomingMeetings(
     @Req() req: Request,
-    @Query('limit') limit?: string
+    @Query('limit') limit?: string,
   ) {
     const clerkId = req.auth.sub;
     const user = await this.ensureUserExists(clerkId);
@@ -79,7 +78,7 @@ export class MeetingsController {
   async inviteUser(
     @Param('id') id: string,
     @Body() inviteUserDto: InviteUserDto,
-    @Req() req: Request
+    @Req() req: Request,
   ) {
     const clerkId = req.auth.sub;
     const user = await this.ensureUserExists(clerkId);

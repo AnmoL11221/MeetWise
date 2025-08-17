@@ -18,7 +18,6 @@ export class ActionItemsController {
   private async ensureUserExists(clerkId: string) {
     let user = await this.prisma.user.findUnique({ where: { clerkId } });
     if (!user) {
-      // Try to get user info from Clerk
       try {
         const { clerkClient } = await import('@clerk/clerk-sdk-node');
         const clerkUser = await clerkClient.users.getUser(clerkId);
@@ -49,7 +48,6 @@ export class ActionItemsController {
     return this.actionItemsService.create(createActionItemDto);
   }
 
-  // GET /action-items/meeting/:meetingId
   @Get('meeting/:meetingId')
   async findAllForMeeting(@Param('meetingId') meetingId: string, @Req() req: Request) {
     const clerkId = req.auth.sub;
