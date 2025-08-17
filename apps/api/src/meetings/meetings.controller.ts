@@ -1,22 +1,11 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-  Req,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ForbiddenException } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
-import { ClerkAuthGuard } from '../guards/clerk-auth.guard';
 import { BodyCreateMeetingDto } from './dto/body-create-meeting.dto';
 import { UpdateMeetingDto } from '../prisma/generated-dto/update-meeting.dto';
-import { Request } from 'express';
-import { PrismaService } from 'prisma/prisma.service';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { ClerkAuthGuard } from '../guards/clerk-auth.guard';
+import { Request } from 'express';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('meetings')
 @UseGuards(ClerkAuthGuard)
@@ -26,38 +15,42 @@ export class MeetingsController {
     private readonly prisma: PrismaService,
   ) {}
 
-  @Post()
-  async create(@Body() body: BodyCreateMeetingDto, @Req() req: Request) {
-    const clerkId = req.auth.sub;
-    try {
-      return await this.meetingsService.create(body, clerkId);
-    } catch (error) {
-      return {
-        statusCode: 500,
-        message: error instanceof Error ? error.message : 'Failed to create meeting',
-      };
+  private async ensureUserExists(clerkId: string) {
+    let user = await this.prisma.user.findUnique({ where: { clerkId } });
+    if (!user) {
+      // Try to get user info from Clerk
+      try {
+        const { clerkClient } = await import('@clerk/clerk-sdk-node');
+        const clerkUser = await clerkClient.users.getUser(clerkId);
+        if (clerkUser && clerkUser.emailAddresses.length > 0) {
+          user = await this.prisma.user.create({
+            data: {
+              clerkId: clerkId,
+              email: clerkUser.emailAddresses[0].emailAddress,
+              name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'New User',
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to create user from Clerk:', error);
+        throw new Error('User not found and could not be created');
+      }
     }
+    return user;
   }
 
-  @Post(':id/invite')
-  async inviteUser(
-    @Param('id') id: string,
-    @Body() inviteUserDto: InviteUserDto,
-    @Req() req: Request
-  ) {
+  @Post()
+  async create(@Body() createMeetingDto: BodyCreateMeetingDto, @Req() req: Request) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
-    if (!user) {
-      return { statusCode: 404, message: 'User not found' };
-    }
-    return this.meetingsService.inviteUser(id, inviteUserDto, user.id);
+    const user = await this.ensureUserExists(clerkId);
+    if (!user) return null;
+    return this.meetingsService.create(createMeetingDto, user.id);
   }
 
   @Get()
   async findAllForUser(@Req() req: Request) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
-    console.log('User lookup for clerkId', clerkId, '=>', user);
+    const user = await this.ensureUserExists(clerkId);
     if (!user) return [];
     return this.meetingsService.findAllForUser(user.id);
   }
@@ -68,7 +61,7 @@ export class MeetingsController {
     @Query('limit') limit?: string
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.ensureUserExists(clerkId);
     if (!user) return [];
     const limitNum = limit ? parseInt(limit, 10) : 5;
     return this.meetingsService.getUpcomingMeetings(user.id, limitNum);
@@ -77,9 +70,21 @@ export class MeetingsController {
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() req: Request) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.ensureUserExists(clerkId);
     if (!user) return null;
     return this.meetingsService.findOne(id, user.id);
+  }
+
+  @Post(':id/invite')
+  async inviteUser(
+    @Param('id') id: string,
+    @Body() inviteUserDto: InviteUserDto,
+    @Req() req: Request
+  ) {
+    const clerkId = req.auth.sub;
+    const user = await this.ensureUserExists(clerkId);
+    if (!user) return null;
+    return this.meetingsService.inviteUser(id, inviteUserDto, user.id);
   }
 
   @Get(':id/attendees')
@@ -98,7 +103,7 @@ export class MeetingsController {
     @Req() req: Request,
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.ensureUserExists(clerkId);
     if (!user) return null;
     return this.meetingsService.update(id, updateData, user.id);
   }
@@ -106,7 +111,7 @@ export class MeetingsController {
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: Request) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.ensureUserExists(clerkId);
     if (!user) return null;
     return this.meetingsService.remove(id, user.id);
   }

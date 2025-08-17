@@ -6,6 +6,7 @@ import {BriefingDossier} from './briefingDossier.entity'
 import {MeetingNote} from './meetingNote.entity'
 import {SharedResource} from './sharedResource.entity'
 import {PracticeSession} from './practiceSession.entity'
+import {ActionItem} from './actionItem.entity'
 
 
 export class Meeting {
@@ -37,4 +38,5 @@ briefingDossier?: BriefingDossier  | null;
 meetingNotes?: MeetingNote[] ;
 sharedResources?: SharedResource[] ;
 practiceSessions?: PracticeSession[] ;
+actionItems?: ActionItem[] ;
 }

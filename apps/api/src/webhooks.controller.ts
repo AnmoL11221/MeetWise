@@ -68,7 +68,6 @@ export class WebhooksController {
               name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'New User',
             },
             create: {
-              id: data.id,
               clerkId: data.id,
               email: data.email_addresses[0].email_address,
               name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'New User',
@@ -79,7 +78,7 @@ export class WebhooksController {
 
         case 'user.updated':
           await this.prisma.user.update({
-            where: { id: data.id },
+            where: { clerkId: data.id },
             data: {
               email: data.email_addresses[0].email_address,
               name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Updated User',
@@ -91,7 +90,7 @@ export class WebhooksController {
         case 'user.deleted':
           if (data.deleted) {
             await this.prisma.user.delete({
-              where: { id: data.id },
+              where: { clerkId: data.id },
             });
             console.log(`User ${data.id} successfully deleted.`);
           }

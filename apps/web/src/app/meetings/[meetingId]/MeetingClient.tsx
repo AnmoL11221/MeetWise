@@ -183,6 +183,7 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
     );
   }
 
+  // The creatorId from the API is the clerkId, so we can compare directly
   const isCreator = userId === meetingData.creatorId;
   const timeUntil = getTimeUntilMeeting(meetingData.scheduledAt);
 

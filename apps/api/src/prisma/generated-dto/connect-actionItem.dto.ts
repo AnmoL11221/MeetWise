@@ -1,3 +1,5 @@
-export class ConnectActionItemDto {
-  id: string;
-}
+
+  export class ConnectActionItemDto {
+    id: string;
+  }
+  

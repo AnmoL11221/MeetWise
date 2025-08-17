@@ -94,7 +94,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
         liveList.push(
           new LiveObject({
             id: item.id,
-            text: item.text || (item as any).description,
+            text: item.description || item.text,
             status: item.status,
             assigneeId: item.assigneeId,
             dueDate: item.dueDate,
@@ -164,7 +164,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
         // Fallback logic for new item fields
         const newItem: ActionItemData = {
           id: item.id,
-          text: item.text || item.description || text,
+          text: item.description || item.text || text,
           status: item.status || status || 'TODO',
           assigneeId: item.assigneeId || assigneeId,
           dueDate: item.dueDate || dueDate,
