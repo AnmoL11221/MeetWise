@@ -65,13 +65,24 @@ export default function MeetingManager() {
     setError(null);
     try {
       const token = await getToken();
+      const payload = {
+        title: newMeeting.title.trim(),
+        isPrivate: newMeeting.isPrivate,
+        roomAccess: newMeeting.roomAccess,
+        ...(newMeeting.description.trim()
+          ? { description: newMeeting.description.trim() }
+          : {}),
+        ...(newMeeting.scheduledAt
+          ? { scheduledAt: new Date(newMeeting.scheduledAt).toISOString() }
+          : {}),
+      };
       const response = await fetch('http://localhost:3000/meetings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newMeeting),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
         throw new Error(`Failed to create meeting. Server responded with ${response.status}.`);
