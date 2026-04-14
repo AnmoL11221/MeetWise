@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CalendarIcon, ClockIcon, LockIcon, UsersIcon, GlobeIcon, ChevronRightIcon } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
+import { apiUrl } from '@/lib/api';
 
 interface Meeting {
   id: string;
@@ -28,7 +29,7 @@ export default function UpcomingMeetings() {
       setError(null);
       try {
         const token = await getToken();
-        const response = await fetch('http://localhost:3000/meetings/upcoming?limit=3', {
+        const response = await fetch(apiUrl('/meetings/upcoming?limit=3'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

@@ -5,6 +5,7 @@ import { LiveObject } from '@liveblocks/client';
 import { CheckCircleIcon, PencilIcon, Trash2Icon, Loader2Icon, UserIcon } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { apiUrl } from '@/lib/api';
 
 interface ActionItemData {
   id: string;
@@ -68,7 +69,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
     const fetchAttendees = async () => {
       try {
         const token = await getToken();
-        const res = await fetch(`http://localhost:3000/meetings/${meetingId}/attendees`, {
+        const res = await fetch(apiUrl(`/meetings/${meetingId}/attendees`), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -113,7 +114,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
       setError(null);
       try {
         const token = await getToken();
-        const res = await fetch(`http://localhost:3000/action-items/meeting/${meetingId}`, {
+        const res = await fetch(apiUrl(`/action-items/meeting/${meetingId}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -150,7 +151,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
       if (dueDate) payload.dueDate = new Date(dueDate).toISOString();
       if (assigneeId) payload.assigneeId = assigneeId;
       try {
-        const res = await fetch('http://localhost:3000/action-items', {
+        const res = await fetch(apiUrl('/action-items'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -193,7 +194,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
     async (ctx, { index, id, newStatus }: { index: number; id: string; newStatus: 'TODO' | 'IN_PROGRESS' | 'DONE' }) => {
       setOptimisticLoading(true);
       const token = await getToken();
-      const res = await fetch(`http://localhost:3000/action-items/${id}`, {
+      const res = await fetch(apiUrl(`/action-items/${id}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -221,7 +222,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
       }
       setOptimisticLoading(true);
       const token = await getToken();
-      const res = await fetch(`http://localhost:3000/action-items/${id}`, {
+      const res = await fetch(apiUrl(`/action-items/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -254,7 +255,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
     ) => {
       setOptimisticLoading(true);
       const token = await getToken();
-      const res = await fetch(`http://localhost:3000/action-items/${id}`, {
+      const res = await fetch(apiUrl(`/action-items/${id}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -300,7 +301,7 @@ export const ActionItemManager: React.FC<ActionItemManagerProps> = ({ meetingId,
       setError(null);
       try {
         const token = await getToken();
-        const res = await fetch(`http://localhost:3000/action-items/meeting/${meetingId}`, {
+        const res = await fetch(apiUrl(`/action-items/meeting/${meetingId}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
