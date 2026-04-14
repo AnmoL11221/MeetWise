@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { apiUrl } from '@/lib/api';
 import { 
   FileTextIcon, 
   LinkIcon, 
@@ -53,7 +54,7 @@ export default function SharedResources({ meetingId }: SharedResourcesProps) {
     setError(null);
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}/resources`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/resources`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -75,7 +76,7 @@ export default function SharedResources({ meetingId }: SharedResourcesProps) {
   const createResource = async () => {
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}/resources`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/resources`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ export default function SharedResources({ meetingId }: SharedResourcesProps) {
     
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}/resources/${editingResource.id}`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/resources/${editingResource.id}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +140,7 @@ export default function SharedResources({ meetingId }: SharedResourcesProps) {
     
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}/resources/${resourceId}`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/resources/${resourceId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

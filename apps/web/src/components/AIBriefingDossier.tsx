@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { apiUrl } from '@/lib/api';
 import { 
   FileText as FileTextIcon,
   Users as UsersIcon,
@@ -85,7 +86,7 @@ export default function AIBriefingDossier({ meetingId }: AIBriefingDossierProps)
     setError(null);
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/briefing-dossier/${meetingId}`, {
+      const response = await fetch(apiUrl(`/briefing-dossier/${meetingId}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -109,7 +110,7 @@ export default function AIBriefingDossier({ meetingId }: AIBriefingDossierProps)
     setError(null);
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/briefing-dossier/${meetingId}/generate`, {
+      const response = await fetch(apiUrl(`/briefing-dossier/${meetingId}/generate`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

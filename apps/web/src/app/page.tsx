@@ -3,6 +3,7 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useState } from "react";
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 
 export default function Home() {
   const [title, setTitle] = useState("");
@@ -12,7 +13,7 @@ export default function Home() {
       return;
     }
 
-    await fetch('http://localhost:3000/meetings', {
+    await fetch(apiUrl('/meetings'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title }),

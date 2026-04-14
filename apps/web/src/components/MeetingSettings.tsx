@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { SettingsIcon, LockIcon, UsersIcon, GlobeIcon, CalendarIcon, SaveIcon, XIcon } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 interface MeetingSettingsProps {
   meetingId: string;
@@ -31,7 +32,7 @@ export default function MeetingSettings({ meetingId, initialSettings, onSettings
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

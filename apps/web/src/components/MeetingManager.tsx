@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PlusIcon, FileTextIcon, HourglassIcon, CalendarIcon, LockIcon, UsersIcon, GlobeIcon } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
+import { apiUrl, getApiErrorMessage } from '@/lib/api';
 
 interface Meeting {
   id: string;
@@ -36,13 +37,13 @@ export default function MeetingManager() {
     setError(null);
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:3000/meetings', {
+      const response = await fetch(apiUrl('/meetings'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
       if (!response.ok) {
-        throw new Error(`Failed to fetch meetings. Server responded with ${response.status}.`);
+        throw new Error(await getApiErrorMessage(response, 'Failed to fetch meetings.'));
       }
       const data = await response.json();
       setMeetings(data);
@@ -76,7 +77,7 @@ export default function MeetingManager() {
           ? { scheduledAt: new Date(newMeeting.scheduledAt).toISOString() }
           : {}),
       };
-      const response = await fetch('http://localhost:3000/meetings', {
+      const response = await fetch(apiUrl('/meetings'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ export default function MeetingManager() {
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        throw new Error(`Failed to create meeting. Server responded with ${response.status}.`);
+        throw new Error(await getApiErrorMessage(response, 'Failed to create meeting.'));
       }
       setNewMeeting({
         title: '',
@@ -96,9 +97,9 @@ export default function MeetingManager() {
       });
       setShowCreateForm(false);
       await fetchMeetings();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError('Failed to create the meeting. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create the meeting. Please try again.');
     } finally {
       setIsCreating(false);
     }

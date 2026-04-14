@@ -2,6 +2,7 @@
 import { FormEvent, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { UserPlusIcon, HourglassIcon } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 export default function InviteManager({ meetingId }: { meetingId: string }) {
   const [inviteEmail, setInviteEmail] = useState('');
@@ -20,7 +21,7 @@ export default function InviteManager({ meetingId }: { meetingId: string }) {
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}/invite`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/invite`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { apiUrl } from '@/lib/api';
 import { 
   MicIcon, 
   MicOffIcon, 
@@ -141,7 +142,7 @@ export default function AISparringPartner({ meetingId }: AISparringPartnerProps)
 
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:3000/ai-sparring/practice-session', {
+      const response = await fetch(apiUrl('/ai-sparring/practice-session'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +190,7 @@ export default function AISparringPartner({ meetingId }: AISparringPartnerProps)
     // Save interaction to backend
     try {
       const token = await getToken();
-      await fetch(`http://localhost:3000/ai-sparring/practice-session/${session.id}/interaction`, {
+      await fetch(apiUrl(`/ai-sparring/practice-session/${session.id}/interaction`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +216,7 @@ export default function AISparringPartner({ meetingId }: AISparringPartnerProps)
   const generateAIResponse = async (persona: Persona, userMessage: string) => {
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/ai-sparring/practice-session/${session!.id}/ai-response`, {
+      const response = await fetch(apiUrl(`/ai-sparring/practice-session/${session!.id}/ai-response`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -293,7 +294,7 @@ export default function AISparringPartner({ meetingId }: AISparringPartnerProps)
       formData.append('audio', audioBlob, 'recording.wav');
       formData.append('transcript', transcript);
 
-      const response = await fetch(`http://localhost:3000/ai-sparring/practice-session/${session.id}/analyze-delivery`, {
+      const response = await fetch(apiUrl(`/ai-sparring/practice-session/${session.id}/analyze-delivery`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -324,7 +325,7 @@ export default function AISparringPartner({ meetingId }: AISparringPartnerProps)
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/ai-sparring/practice-session/${session.id}/follow-up-questions`, {
+      const response = await fetch(apiUrl(`/ai-sparring/practice-session/${session.id}/follow-up-questions`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

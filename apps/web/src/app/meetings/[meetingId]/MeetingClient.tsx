@@ -13,6 +13,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, LockIcon, UsersIcon, GlobeIcon, ClockIcon, Video, MessageSquare } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 interface Meeting {
   id: string;
@@ -41,7 +42,7 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
     setError(null);
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -74,7 +75,7 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
     setDeleteError(null);
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:3000/meetings/${meetingId}`, {
+      const response = await fetch(apiUrl(`/meetings/${meetingId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
