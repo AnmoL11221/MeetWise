@@ -7,6 +7,7 @@ import { ActionItemsModule } from './action-items/action-items.module';
 import { ClerkModule } from './clerk/clerk.module';
 import { BriefingDossierModule } from './briefing-dossier/briefing-dossier.module';
 import { AISparringModule } from './ai-sparring/ai-sparring.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AISparringModule } from './ai-sparring/ai-sparring.module';
     ClerkModule,
     BriefingDossierModule,
     AISparringModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

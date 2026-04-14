@@ -10,6 +10,7 @@ import { apiUrl } from '@/lib/api';
 interface ActionItemData {
   id: string;
   text: string;
+  description?: string;
   status: 'TODO' | 'IN_PROGRESS' | 'DONE';
   assigneeId?: string;
   dueDate?: string;

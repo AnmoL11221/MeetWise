@@ -45,9 +45,10 @@ interface ParticipantVideoProps {
 }
 
 const ParticipantVideo: React.FC<ParticipantVideoProps> = ({ participantId, isLocal = false }) => {
+  const daily = useDaily();
   const videoTrack = useVideoTrack(participantId);
   const audioTrack = useAudioTrack(participantId);
-  const { localParticipant } = useLocalParticipant();
+  const localParticipant = useLocalParticipant();
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   const [showControls, setShowControls] = useState(false);
@@ -67,26 +68,18 @@ const ParticipantVideo: React.FC<ParticipantVideoProps> = ({ participantId, isLo
   }, [audioTrack]);
 
   const toggleAudio = useCallback(async () => {
-    if (isLocal) {
-      if (localParticipant.audio) {
-        await localParticipant.setLocalAudio(false);
-      } else {
-        await localParticipant.setLocalAudio(true);
-      }
+    if (isLocal && daily) {
+      await daily.setLocalAudio(!localParticipant?.audio);
     }
     setIsAudioMuted(!isAudioMuted);
-  }, [isLocal, localParticipant, isAudioMuted]);
+  }, [isLocal, daily, localParticipant?.audio, isAudioMuted]);
 
   const toggleVideo = useCallback(async () => {
-    if (isLocal) {
-      if (localParticipant.video) {
-        await localParticipant.setLocalVideo(false);
-      } else {
-        await localParticipant.setLocalVideo(true);
-      }
+    if (isLocal && daily) {
+      await daily.setLocalVideo(!localParticipant?.video);
     }
     setIsVideoMuted(!isVideoMuted);
-  }, [isLocal, localParticipant, isVideoMuted]);
+  }, [isLocal, daily, localParticipant?.video, isVideoMuted]);
 
   return (
     <div
@@ -142,7 +135,7 @@ const ParticipantVideo: React.FC<ParticipantVideoProps> = ({ participantId, isLo
 
 const VideoConferenceControls: React.FC = () => {
   const daily = useDaily();
-  const { localParticipant } = useLocalParticipant();
+  const localParticipant = useLocalParticipant();
   const { isSharingScreen, startScreenShare, stopScreenShare } = useScreenShare();
   const [isRecording, setIsRecording] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -150,20 +143,12 @@ const VideoConferenceControls: React.FC = () => {
   const [virtualBackground, setVirtualBackground] = useState<string | null>(null);
 
   const toggleAudio = useCallback(async () => {
-    if (localParticipant.audio) {
-      await localParticipant.setLocalAudio(false);
-    } else {
-      await localParticipant.setLocalAudio(true);
-    }
-  }, [localParticipant]);
+    await daily?.setLocalAudio(!localParticipant?.audio);
+  }, [daily, localParticipant?.audio]);
 
   const toggleVideo = useCallback(async () => {
-    if (localParticipant.video) {
-      await localParticipant.setLocalVideo(false);
-    } else {
-      await localParticipant.setLocalVideo(true);
-    }
-  }, [localParticipant]);
+    await daily?.setLocalVideo(!localParticipant?.video);
+  }, [daily, localParticipant?.video]);
 
   const toggleScreenShare = useCallback(async () => {
     if (isSharingScreen) {
@@ -188,13 +173,14 @@ const VideoConferenceControls: React.FC = () => {
   }, [daily]);
 
   const applyVirtualBackground = useCallback(async (backgroundUrl: string | null) => {
+    const dailyWithBg = daily as any;
     if (backgroundUrl) {
-      await daily?.setVirtualBackground({
+      await dailyWithBg?.setVirtualBackground({
         sourceType: 'image',
         source: backgroundUrl,
       });
     } else {
-      await daily?.setVirtualBackground(null);
+      await dailyWithBg?.setVirtualBackground(null);
     }
     setVirtualBackground(backgroundUrl);
   }, [daily]);
@@ -206,22 +192,22 @@ const VideoConferenceControls: React.FC = () => {
         <button
           onClick={toggleAudio}
           className={`p-3 rounded-full ${
-            localParticipant.audio ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-500'
+            localParticipant?.audio ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-500'
           } text-white transition-colors`}
-          title={localParticipant.audio ? 'Mute Audio' : 'Unmute Audio'}
+          title={localParticipant?.audio ? 'Mute Audio' : 'Unmute Audio'}
         >
-          {localParticipant.audio ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+          {localParticipant?.audio ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
         </button>
 
         {/* Video Control */}
         <button
           onClick={toggleVideo}
           className={`p-3 rounded-full ${
-            localParticipant.video ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-500'
+            localParticipant?.video ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-500'
           } text-white transition-colors`}
-          title={localParticipant.video ? 'Turn Off Video' : 'Turn On Video'}
+          title={localParticipant?.video ? 'Turn Off Video' : 'Turn On Video'}
         >
-          {localParticipant.video ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+          {localParticipant?.video ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
         </button>
 
         {/* Screen Share */}
@@ -321,17 +307,17 @@ const VideoConferenceControls: React.FC = () => {
 
 const ParticipantsList: React.FC = () => {
   const participantIds = useParticipantIds();
-  const { localParticipant } = useLocalParticipant();
+  const localParticipant = useLocalParticipant();
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-white text-sm">
         <span>You</span>
-        {localParticipant.audio && <Mic className="w-3 h-3" />}
-        {localParticipant.video && <Video className="w-3 h-3" />}
+        {localParticipant?.audio && <Mic className="w-3 h-3" />}
+        {localParticipant?.video && <Video className="w-3 h-3" />}
       </div>
       {participantIds
-        .filter(id => id !== localParticipant.session_id)
+        .filter(id => id !== localParticipant?.session_id)
         .map(id => (
           <div key={id} className="flex items-center gap-2 text-white text-sm">
             <span>Participant {id.slice(0, 8)}</span>
@@ -429,10 +415,12 @@ const VideoConferenceInner: React.FC<VideoConferenceProps> = ({ roomUrl, onLeave
 
 const VideoGrid: React.FC = () => {
   const participantIds = useParticipantIds();
-  const { localParticipant } = useLocalParticipant();
+  const localParticipant = useLocalParticipant();
   const [layout, setLayout] = useState<'grid' | 'speaker'>('grid');
 
-  const remoteParticipants = participantIds.filter(id => id !== localParticipant.session_id);
+  const remoteParticipants = participantIds.filter(
+    (id) => id !== localParticipant?.session_id,
+  );
 
   if (layout === 'speaker' && remoteParticipants.length > 0) {
     return (
@@ -441,7 +429,9 @@ const VideoGrid: React.FC = () => {
           <ParticipantVideo participantId={remoteParticipants[0]} />
         </div>
         <div className="w-64 space-y-2">
-          <ParticipantVideo participantId={localParticipant.session_id} isLocal />
+          {localParticipant?.session_id && (
+            <ParticipantVideo participantId={localParticipant.session_id} isLocal />
+          )}
           {remoteParticipants.slice(1).map(id => (
             <ParticipantVideo key={id} participantId={id} />
           ))}
@@ -453,7 +443,9 @@ const VideoGrid: React.FC = () => {
   return (
     <div className="flex-1 p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 h-full">
-        <ParticipantVideo participantId={localParticipant.session_id} isLocal />
+        {localParticipant?.session_id && (
+          <ParticipantVideo participantId={localParticipant.session_id} isLocal />
+        )}
         {remoteParticipants.map(id => (
           <ParticipantVideo key={id} participantId={id} />
         ))}

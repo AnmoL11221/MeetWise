@@ -1,21 +1,20 @@
 
-import {Priority} from '@prisma/client'
+import {Prisma} from '@prisma/client'
 import {ApiProperty} from '@nestjs/swagger'
 
 
-export class ActionItemDto {
+export class NotificationDto {
   id: string ;
-description: string ;
-status: string ;
+type: string ;
+title: string ;
+body: string ;
+metadata: Prisma.JsonValue  | null;
+isRead: boolean ;
 @ApiProperty({
   type: `string`,
   format: `date-time`,
 })
-dueDate: Date  | null;
-@ApiProperty({
-  enum: Priority,
-})
-priority: Priority ;
+sentEmailAt: Date  | null;
 @ApiProperty({
   type: `string`,
   format: `date-time`,

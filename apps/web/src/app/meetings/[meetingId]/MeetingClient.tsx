@@ -25,6 +25,8 @@ interface Meeting {
   createdAt: string;
   updatedAt: string;
   creatorId: string;
+  creatorClerkId?: string;
+  recurrencePattern?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
 }
 
 export default function MeetingClient({ meetingId }: { meetingId: string }) {
@@ -36,6 +38,7 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'collaboration' | 'video'>('collaboration');
+  const [summary, setSummary] = useState<any>(null);
 
   const fetchMeeting = useCallback(async () => {
     setLoading(true);
@@ -67,6 +70,26 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
     fetchMeeting();
   }, [meetingId, fetchMeeting]);
 
+  const loadSummary = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/summary`), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) return;
+      setSummary(await response.json());
+    } catch {
+      setSummary(null);
+    }
+  }, [getToken, meetingId]);
+
+  useEffect(() => {
+    if (!meetingId) return;
+    loadSummary();
+  }, [meetingId, loadSummary]);
+
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this meeting? This action cannot be undone.')) {
       return;
@@ -92,6 +115,47 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
       setDeleteError(err.message || 'An unexpected error occurred during deletion.');
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch(apiUrl(`/meetings/${meetingId}/summary/generate`), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate summary.');
+      }
+      await loadSummary();
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate summary.');
+    }
+  };
+
+  const handleGenerateRecurring = async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch(
+        apiUrl(`/meetings/${meetingId}/recurring/generate?count=5`),
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        },
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to generate recurring meetings.');
+      }
+      await fetchMeeting();
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate recurring meetings.');
     }
   };
 
@@ -184,8 +248,8 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
     );
   }
 
-  // The creatorId from the API is the clerkId, so we can compare directly
-  const isCreator = userId === meetingData.creatorId;
+  const isCreator =
+    userId === meetingData.creatorClerkId || userId === meetingData.creatorId;
   const timeUntil = getTimeUntilMeeting(meetingData.scheduledAt);
 
   return (
@@ -252,6 +316,20 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
               >
                 {deleteLoading ? 'Deleting...' : 'Delete Meeting'}
               </button>
+              <button
+                onClick={handleGenerateSummary}
+                className="px-4 py-2 bg-emerald-600 text-white font-semibold rounded hover:bg-emerald-700 transition"
+              >
+                Generate Summary
+              </button>
+              {meetingData.recurrencePattern && (
+                <button
+                  onClick={handleGenerateRecurring}
+                  className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded hover:bg-indigo-700 transition"
+                >
+                  Generate Recurring
+                </button>
+              )}
               {deleteError && <div className="text-red-400 mt-2">{deleteError}</div>}
             </div>
           )}
@@ -301,6 +379,14 @@ export default function MeetingClient({ meetingId }: { meetingId: string }) {
               </div>
               
               <AISparringPartner meetingId={meetingId} />
+              {summary && (
+                <div className="mt-8 p-4 bg-gray-900/50 border border-gray-700 rounded-lg">
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    Post-Meeting Summary
+                  </h3>
+                  <p className="text-sm text-gray-300">{summary.summaryText}</p>
+                </div>
+              )}
               
               <AgendaManager />
               <ActionItemManager meetingId={meetingId} creatorId={meetingData.creatorId} />

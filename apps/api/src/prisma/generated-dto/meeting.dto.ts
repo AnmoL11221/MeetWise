@@ -25,4 +25,15 @@ createdAt: Date ;
   format: `date-time`,
 })
 updatedAt: Date ;
+recurrencePattern: string  | null;
+@ApiProperty({
+  type: `integer`,
+  format: `int32`,
+})
+recurrenceInterval: number  | null;
+@ApiProperty({
+  type: `string`,
+  format: `date-time`,
+})
+recurrenceEndDate: Date  | null;
 }

@@ -15,6 +15,7 @@ import { AISparringService } from './ai-sparring.service';
 import { ClerkAuthGuard } from '../guards/clerk-auth.guard';
 import { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ClerkUserService } from '../clerk/clerk-user.service';
 
 interface CreatePracticeSessionDto {
   meetingId: string;
@@ -35,6 +36,7 @@ export class AISparringController {
   constructor(
     private readonly aiSparringService: AISparringService,
     private readonly prisma: PrismaService,
+    private readonly clerkUserService: ClerkUserService,
   ) {}
 
   @Post('practice-session')
@@ -43,7 +45,7 @@ export class AISparringController {
     @Req() req: Request
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.clerkUserService.ensureUserExists(clerkId);
     
     if (!user) {
       return { statusCode: 404, message: 'User not found' };
@@ -72,7 +74,7 @@ export class AISparringController {
     @Req() req: Request
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.clerkUserService.ensureUserExists(clerkId);
     
     if (!user) {
       return { statusCode: 404, message: 'User not found' };
@@ -105,7 +107,7 @@ export class AISparringController {
     @Req() req: Request
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.clerkUserService.ensureUserExists(clerkId);
     
     if (!user) {
       return { statusCode: 404, message: 'User not found' };
@@ -146,7 +148,7 @@ export class AISparringController {
     @Req() req: Request
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.clerkUserService.ensureUserExists(clerkId);
     
     if (!user) {
       return { statusCode: 404, message: 'User not found' };
@@ -185,9 +187,9 @@ export class AISparringController {
     @UploadedFile() audioFile: Express.Multer.File,
     @Body() body: { transcript: string },
     @Req() req: Request
-  ) {
+  ): Promise<any> {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.clerkUserService.ensureUserExists(clerkId);
     
     if (!user) {
       return { statusCode: 404, message: 'User not found' };
@@ -235,7 +237,7 @@ export class AISparringController {
     @Req() req: Request
   ) {
     const clerkId = req.auth.sub;
-    const user = await this.prisma.user.findUnique({ where: { clerkId } });
+    const user = await this.clerkUserService.ensureUserExists(clerkId);
     
     if (!user) {
       return { statusCode: 404, message: 'User not found' };

@@ -57,4 +57,30 @@ export class BodyCreateMeetingDto {
   })
   @IsOptional()
   agendaItems?: any;
+
+  @ApiProperty({
+    description: 'Recurrence pattern for this meeting',
+    required: false,
+    enum: ['DAILY', 'WEEKLY', 'MONTHLY'],
+  })
+  @IsOptional()
+  @IsIn(['DAILY', 'WEEKLY', 'MONTHLY'])
+  recurrencePattern?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+  @ApiProperty({
+    description: 'Recurrence interval (e.g., every 2 weeks)',
+    required: false,
+    example: 1,
+  })
+  @IsOptional()
+  recurrenceInterval?: number;
+
+  @ApiProperty({
+    description: 'Recurrence end date',
+    required: false,
+    example: '2026-12-31T10:00:00Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  recurrenceEndDate?: string;
 }

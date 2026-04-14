@@ -1,6 +1,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import MeetingManager from '@/components/MeetingManager';
 import UpcomingMeetings from '@/components/UpcomingMeetings';
+import NotificationsPanel from '@/components/NotificationsPanel';
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -25,6 +26,9 @@ export default async function DashboardPage() {
         </div>
         <div>
           <UpcomingMeetings />
+          <div className="mt-6">
+            <NotificationsPanel />
+          </div>
         </div>
       </div>
     </div>

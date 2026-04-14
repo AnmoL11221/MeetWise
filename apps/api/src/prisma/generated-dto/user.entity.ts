@@ -5,6 +5,8 @@ import {PracticeSession} from './practiceSession.entity'
 import {UserPersona} from './userPersona.entity'
 import {MeetingNote} from './meetingNote.entity'
 import {ActionItem} from './actionItem.entity'
+import {Notification} from './notification.entity'
+import {MeetingTemplate} from './meetingTemplate.entity'
 
 
 export class User {
@@ -31,4 +33,6 @@ practiceSessions?: PracticeSession[] ;
 userPersonas?: UserPersona[] ;
 meetingNotes?: MeetingNote[] ;
 assignedActionItems?: ActionItem[] ;
+notifications?: Notification[] ;
+meetingTemplates?: MeetingTemplate[] ;
 }

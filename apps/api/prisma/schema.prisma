@@ -28,6 +28,8 @@ model User {
   userPersonas    UserPersona[]
   meetingNotes    MeetingNote[]
   assignedActionItems ActionItem[] @relation("ActionItemAssignee")
+  notifications   Notification[]
+  meetingTemplates MeetingTemplate[] @relation("MeetingTemplateCreator")
 }
 
 model Meeting {
@@ -49,6 +51,52 @@ model Meeting {
   sharedResources SharedResource[]
   practiceSessions PracticeSession[]
   actionItems   ActionItem[]
+  recurrencePattern String?
+  recurrenceInterval Int?
+  recurrenceEndDate DateTime?
+  parentMeetingId String?
+  parentMeeting Meeting? @relation("MeetingRecurrence", fields: [parentMeetingId], references: [id], onDelete: SetNull)
+  recurringMeetings Meeting[] @relation("MeetingRecurrence")
+  summary MeetingSummary?
+}
+
+model MeetingTemplate {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  agendaItems Json?
+  isPrivate   Boolean  @default(true)
+  roomAccess  String   @default("INVITE_ONLY")
+  creatorId   String
+  creator     User     @relation("MeetingTemplateCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MeetingSummary {
+  id            String   @id @default(cuid())
+  meetingId     String   @unique
+  meeting       Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  summaryText   String
+  decisions     Json?
+  actionItems   Json?
+  generatedBy   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  title       String
+  body        String
+  metadata    Json?
+  isRead      Boolean  @default(false)
+  sentEmailAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model BriefingDossier {

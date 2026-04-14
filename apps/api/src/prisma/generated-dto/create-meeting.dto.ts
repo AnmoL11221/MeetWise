@@ -14,4 +14,15 @@ description?: string;
 })
 scheduledAt?: Date;
 agendaItems?: Prisma.InputJsonValue;
+recurrencePattern?: string;
+@ApiProperty({
+  type: `integer`,
+  format: `int32`,
+})
+recurrenceInterval?: number;
+@ApiProperty({
+  type: `string`,
+  format: `date-time`,
+})
+recurrenceEndDate?: Date;
 }

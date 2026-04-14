@@ -17,6 +17,12 @@ interface Meeting {
   updatedAt: string;
 }
 
+interface MeetingTemplate {
+  id: string;
+  title: string;
+  description?: string;
+}
+
 export default function MeetingManager() {
   const { getToken } = useAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -26,11 +32,18 @@ export default function MeetingManager() {
     scheduledAt: '',
     isPrivate: true,
     roomAccess: 'INVITE_ONLY' as const,
+    recurrencePattern: '' as '' | 'DAILY' | 'WEEKLY' | 'MONTHLY',
+    recurrenceInterval: 1,
+    recurrenceEndDate: '',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [templates, setTemplates] = useState<MeetingTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [editingTemplateId, setEditingTemplateId] = useState('');
+  const [editingTemplateTitle, setEditingTemplateTitle] = useState('');
 
   const fetchMeetings = async () => {
     setIsLoading(true);
@@ -57,11 +70,31 @@ export default function MeetingManager() {
 
   useEffect(() => {
     fetchMeetings();
+    fetchTemplates();
   }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch(apiUrl('/meetings/templates'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) return;
+      setTemplates(await response.json());
+    } catch {
+      setTemplates([]);
+    }
+  };
 
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMeeting.title.trim() || isCreating) return;
+    if (newMeeting.recurrencePattern && !newMeeting.scheduledAt) {
+      setError('Please set a scheduled date/time when recurrence is enabled.');
+      return;
+    }
     setIsCreating(true);
     setError(null);
     try {
@@ -75,6 +108,19 @@ export default function MeetingManager() {
           : {}),
         ...(newMeeting.scheduledAt
           ? { scheduledAt: new Date(newMeeting.scheduledAt).toISOString() }
+          : {}),
+        ...(newMeeting.recurrencePattern
+          ? {
+              recurrencePattern: newMeeting.recurrencePattern,
+              recurrenceInterval: newMeeting.recurrenceInterval,
+              ...(newMeeting.recurrenceEndDate
+                ? {
+                    recurrenceEndDate: new Date(
+                      newMeeting.recurrenceEndDate,
+                    ).toISOString(),
+                  }
+                : {}),
+            }
           : {}),
       };
       const response = await fetch(apiUrl('/meetings'), {
@@ -94,6 +140,9 @@ export default function MeetingManager() {
         scheduledAt: '',
         isPrivate: true,
         roomAccess: 'INVITE_ONLY',
+        recurrencePattern: '',
+        recurrenceInterval: 1,
+        recurrenceEndDate: '',
       });
       setShowCreateForm(false);
       await fetchMeetings();
@@ -103,6 +152,123 @@ export default function MeetingManager() {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!newMeeting.title.trim()) return;
+    try {
+      const token = await getToken();
+      const response = await fetch(apiUrl('/meetings/templates'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newMeeting.title.trim(),
+          description: newMeeting.description.trim() || undefined,
+          isPrivate: newMeeting.isPrivate,
+          roomAccess: newMeeting.roomAccess,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, 'Failed to save template.'));
+      }
+      await fetchTemplates();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save template.');
+    }
+  };
+
+  const handleUseTemplate = async () => {
+    if (!selectedTemplateId) return;
+    try {
+      const token = await getToken();
+      const response = await fetch(
+        apiUrl(`/meetings/templates/${selectedTemplateId}/create`),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, 'Failed to create from template.'));
+      }
+      setSelectedTemplateId('');
+      await fetchMeetings();
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to create from template.',
+      );
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    try {
+      const token = await getToken();
+      const response = await fetch(apiUrl(`/meetings/templates/${templateId}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, 'Failed to delete template.'));
+      }
+      if (selectedTemplateId === templateId) {
+        setSelectedTemplateId('');
+      }
+      await fetchTemplates();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete template.');
+    }
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!editingTemplateId || !editingTemplateTitle.trim()) return;
+    try {
+      const token = await getToken();
+      const response = await fetch(apiUrl(`/meetings/templates/${editingTemplateId}`), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: editingTemplateTitle.trim(),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, 'Failed to update template.'));
+      }
+      setEditingTemplateId('');
+      setEditingTemplateTitle('');
+      await fetchTemplates();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update template.');
+    }
+  };
+
+  const getRecurringPreview = () => {
+    if (!newMeeting.recurrencePattern || !newMeeting.scheduledAt) return [];
+    const preview: string[] = [];
+    let current = new Date(newMeeting.scheduledAt);
+    const interval = Math.max(1, Number(newMeeting.recurrenceInterval) || 1);
+    for (let i = 0; i < 3; i++) {
+      if (newMeeting.recurrencePattern === 'DAILY') {
+        current.setDate(current.getDate() + interval);
+      } else if (newMeeting.recurrencePattern === 'WEEKLY') {
+        current.setDate(current.getDate() + interval * 7);
+      } else if (newMeeting.recurrencePattern === 'MONTHLY') {
+        current.setMonth(current.getMonth() + interval);
+      }
+      preview.push(new Date(current).toLocaleString());
+    }
+    return preview;
   };
 
   const getAccessIcon = (roomAccess: string) => {
@@ -151,6 +317,79 @@ export default function MeetingManager() {
             {showCreateForm ? 'Cancel' : 'Create Meeting'}
           </button>
         </div>
+        {templates.length > 0 && (
+          <div className="mb-4 space-y-3">
+            <div className="flex gap-2">
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => setSelectedTemplateId(e.target.value)}
+              className="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-md text-white"
+            >
+              <option value="">Create from template...</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleUseTemplate}
+              disabled={!selectedTemplateId}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md disabled:bg-opacity-50"
+            >
+              Create
+            </button>
+            </div>
+            <div className="space-y-2">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className="p-2 border border-gray-700 rounded-md flex items-center justify-between gap-2"
+                >
+                  {editingTemplateId === template.id ? (
+                    <input
+                      value={editingTemplateTitle}
+                      onChange={(e) => setEditingTemplateTitle(e.target.value)}
+                      className="flex-1 p-2 bg-gray-800 border border-gray-600 rounded-md text-white text-sm"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-300">{template.title}</div>
+                  )}
+                  <div className="flex gap-2">
+                    {editingTemplateId === template.id ? (
+                      <button
+                        type="button"
+                        onClick={handleUpdateTemplate}
+                        className="text-xs px-2 py-1 bg-blue-600 rounded text-white"
+                      >
+                        Save
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingTemplateId(template.id);
+                          setEditingTemplateTitle(template.title);
+                        }}
+                        className="text-xs px-2 py-1 bg-gray-700 rounded text-white"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="text-xs px-2 py-1 bg-red-700 rounded text-white"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showCreateForm && (
           <form onSubmit={handleCreateMeeting} className="space-y-4">
@@ -183,6 +422,81 @@ export default function MeetingManager() {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Recurrence
+                </label>
+                <select
+                  value={newMeeting.recurrencePattern}
+                  onChange={(e) =>
+                    setNewMeeting({
+                      ...newMeeting,
+                      recurrencePattern: e.target.value as any,
+                    })
+                  }
+                  className="w-full p-3 bg-gray-800 border border-gray-600 rounded-md text-white"
+                  disabled={isCreating}
+                >
+                  <option value="">None</option>
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MONTHLY">Monthly</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Every
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={newMeeting.recurrenceInterval}
+                  onChange={(e) =>
+                    setNewMeeting({
+                      ...newMeeting,
+                      recurrenceInterval: Math.max(1, Number(e.target.value) || 1),
+                    })
+                  }
+                  className="w-full p-3 bg-gray-800 border border-gray-600 rounded-md text-white"
+                  disabled={isCreating || !newMeeting.recurrencePattern}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  End date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newMeeting.recurrenceEndDate}
+                  onChange={(e) =>
+                    setNewMeeting({
+                      ...newMeeting,
+                      recurrenceEndDate: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 bg-gray-800 border border-gray-600 rounded-md text-white"
+                  disabled={isCreating || !newMeeting.recurrencePattern}
+                />
+              </div>
+            </div>
+            {newMeeting.recurrencePattern && (
+              <div className="p-3 bg-gray-800/60 border border-gray-700 rounded-md">
+                <p className="text-sm text-gray-300 font-medium mb-1">
+                  Recurrence preview (next 3):
+                </p>
+                <ul className="text-xs text-gray-400 space-y-1">
+                  {getRecurringPreview().length > 0 ? (
+                    getRecurringPreview().map((value, idx) => (
+                      <li key={idx}>- {value}</li>
+                    ))
+                  ) : (
+                    <li>- Set a scheduled date/time to preview recurrence.</li>
+                  )}
+                </ul>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -249,6 +563,14 @@ export default function MeetingManager() {
                     <CalendarIcon className="w-4 h-4" /> Create Meeting
                   </>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTemplate}
+                className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 transition-colors"
+                disabled={isCreating || !newMeeting.title.trim()}
+              >
+                Save Template
               </button>
               <button
                 type="button"

@@ -14,8 +14,7 @@ import {
   SaveIcon,
   XIcon,
   FileIcon,
-  ImageIcon,
-  DocumentIcon
+  ImageIcon
 } from 'lucide-react';
 
 interface SharedResource {
@@ -34,6 +33,14 @@ interface SharedResourcesProps {
   meetingId: string;
 }
 
+interface NewResourceInput {
+  title: string;
+  description: string;
+  type: SharedResource['type'];
+  url: string;
+  content: string;
+}
+
 export default function SharedResources({ meetingId }: SharedResourcesProps) {
   const { getToken, userId } = useAuth();
   const [resources, setResources] = useState<SharedResource[]>([]);
@@ -41,10 +48,10 @@ export default function SharedResources({ meetingId }: SharedResourcesProps) {
   const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingResource, setEditingResource] = useState<SharedResource | null>(null);
-  const [newResource, setNewResource] = useState({
+  const [newResource, setNewResource] = useState<NewResourceInput>({
     title: '',
     description: '',
-    type: 'document' as const,
+    type: 'document',
     url: '',
     content: '',
   });
@@ -185,7 +192,7 @@ export default function SharedResources({ meetingId }: SharedResourcesProps) {
 
   const getResourceIcon = (type: string) => {
     switch (type) {
-      case 'document': return <DocumentIcon className="w-5 h-5" />;
+      case 'document': return <FileTextIcon className="w-5 h-5" />;
       case 'link': return <LinkIcon className="w-5 h-5" />;
       case 'file': return <FileIcon className="w-5 h-5" />;
       case 'scratchpad': return <EditIcon className="w-5 h-5" />;

@@ -7,6 +7,7 @@ import {MeetingNote} from './meetingNote.entity'
 import {SharedResource} from './sharedResource.entity'
 import {PracticeSession} from './practiceSession.entity'
 import {ActionItem} from './actionItem.entity'
+import {MeetingSummary} from './meetingSummary.entity'
 
 
 export class Meeting {
@@ -39,4 +40,19 @@ meetingNotes?: MeetingNote[] ;
 sharedResources?: SharedResource[] ;
 practiceSessions?: PracticeSession[] ;
 actionItems?: ActionItem[] ;
+recurrencePattern: string  | null;
+@ApiProperty({
+  type: `integer`,
+  format: `int32`,
+})
+recurrenceInterval: number  | null;
+@ApiProperty({
+  type: `string`,
+  format: `date-time`,
+})
+recurrenceEndDate: Date  | null;
+parentMeetingId: string  | null;
+parentMeeting?: Meeting  | null;
+recurringMeetings?: Meeting[] ;
+summary?: MeetingSummary  | null;
 }

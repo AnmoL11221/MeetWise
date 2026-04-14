@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Video, Users, Monitor, Record, Settings } from 'lucide-react';
+import { Video, Users, Monitor, Circle, Settings } from 'lucide-react';
 import VideoConference from './VideoConference';
 import dailyService from '@/services/dailyService';
 
@@ -78,7 +78,7 @@ const VideoConferenceTab: React.FC<VideoConferenceTabProps> = ({ meetingId, meet
             )}
             {isRecording && (
               <div className="flex items-center gap-1 text-red-400">
-                <Record className="w-4 h-4" />
+                <Circle className="w-4 h-4 fill-current" />
                 <span className="text-sm">Recording</span>
               </div>
             )}
@@ -153,7 +153,7 @@ const VideoConferenceTab: React.FC<VideoConferenceTabProps> = ({ meetingId, meet
                 <span>Screen sharing</span>
               </div>
               <div className="flex items-center gap-2 text-gray-400">
-                <Record className="w-4 h-4" />
+                <Circle className="w-4 h-4" />
                 <span>Meeting recording</span>
               </div>
               <div className="flex items-center gap-2 text-gray-400">
